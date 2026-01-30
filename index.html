@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi primera chamba</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>    
+
+    <div id="Contenedor">
+
+        <div id="BarraArriba">
+            <nav class="nav" aria-label="Main navigation">
+                <a class="nav-logo" href="index.html">Cocina</a>
+                <button class="nav-toggle" aria-controls="primary-navigation" aria-expanded="false" aria-label="Abrir menú">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+                <ul id="primary-navigation" class="nav-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="index.html#menu">Menu</a></li>
+                    <li><a href="reservas.html">Reservas</a></li>
+                    <li><a href="promociones.html">Promociones</a></li>
+                </ul>
+            </nav>
+        </div>
+
+    <div id="CajaGrande" class="card">
+        <div id="Cajita1" class="card card--accent">
+            <div class="food-info">
+                <h4 class="food-title">Lasagna al Forno</h4>
+                <p class="food-price">$12.50</p>
+                <p class="food-desc">Capas de pasta, ragú de carne, bechamel cremosa y queso gratinado al horno.</p>
+            </div>
+            <img src="https://www.spendwithpennies.com/wp-content/uploads/2022/12/1200-Easy-Homemade-Lasagna-SpendWithPennies.jpg" alt="FotoLasagna">
+        </div>
+
+        <div id="Cajita2" class="card">
+            <img src="https://cncsalud.com/wp-content/uploads/2020/06/pizza-suprema-keto.jpg" alt="Placeholder Image">
+            <div class="food-info">
+                <h4 class="food-title">Pizza Suprema</h4>
+                <p class="food-price">$9.50</p>
+                <p class="food-desc">Masa fina, salsa de tomate casera, mozzarella, pepperoni, pimientos y aceitunas.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="Cajita3" class="card">
+        <h3>Top Platillos</h3>
+        <ul>
+            <li>Pizza Suprema</li>
+            <li>Linguine</li>
+            <li>Rigatoni</li>    
+    </div>
+
+  </div>
+
+</body>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const btn = document.querySelector('.nav-toggle');
+    const menu = document.getElementById('primary-navigation');
+    if(!btn || !menu) return;
+    btn.addEventListener('click', function(){
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', String(!expanded));
+        menu.classList.toggle('open');
+        this.classList.toggle('open');
+    });
+});
+</script>
+</html>

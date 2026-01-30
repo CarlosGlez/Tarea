@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Reservas - CHINCHIN</title>
+	<link rel="stylesheet" href="styles.css">
+	<style>
+		body{font-family:Arial,Helvetica,sans-serif;padding:24px;background:#fafafa}
+		.container{max-width:640px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+		label{display:block;margin-top:12px;font-weight:600}
+		input[type=text],input[type=email],textarea,select{width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:4px}
+		textarea{min-height:100px}
+		.actions{margin-top:16px;display:flex;gap:8px;align-items:center}
+		.btn{background:#0078d4;color:#fff;padding:10px 14px;border:none;border-radius:6px;cursor:pointer}
+		.btn:disabled{opacity:0.6;cursor:not-allowed}
+		.msg{margin-top:12px;padding:10px;border-radius:6px;display:none}
+		.msg.success{background:#e6ffed;color:#055a2f}
+	</style>
+</head>
+<body>
+	<main class="container">
+		<h1>Reservas</h1>
+		<p>Rellena los datos para tu pedido.</p>
+
+		<form id="reservaForm">
+			<label for="nombre">Nombre</label>
+			<input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required>
+
+			<label for="correo">Correo</label>
+			<input type="email" id="correo" name="correo" placeholder="tu@correo.com" required>
+
+			<label for="pedido">¿Qué vas a ordenar?</label>
+			<textarea id="pedido" name="pedido" placeholder="Describe lo que quieres pedir" required></textarea>
+
+			<label for="comentarios">Comentarios extra (opcional)</label>
+			<textarea id="comentarios" name="comentarios" placeholder="Alergias, observaciones, etc."></textarea>
+
+			<div class="actions">
+				<button type="submit" class="btn">Enviar reserva</button>
+				<div id="status" class="msg success" role="status"></div>
+			</div>
+		</form>
+
+	</main>
+
+	<script>
+		const form = document.getElementById('reservaForm');
+		const status = document.getElementById('status');
+
+		form.addEventListener('submit', function(e){
+			e.preventDefault();
+			const nombre = form.nombre.value.trim();
+			const correo = form.correo.value.trim();
+			const pedido = form.pedido.value.trim();
+			if(!nombre || !correo || !pedido){
+				status.textContent = 'Por favor completa los campos requeridos.';
+				status.style.display = 'block';
+				status.classList.remove('success');
+				status.style.background = '#fff4e5';
+				status.style.color = '#663c00';
+				return;
+			}
+			// Simular envío: mostrar confirmación y limpiar formulario
+			status.textContent = 'Reserva recibida. Gracias, ' + nombre + '!';
+			status.style.display = 'block';
+			status.classList.add('success');
+			form.reset();
+		});
+	</script>
+</body>
+</html>
+

@@ -1,0 +1,246 @@
+.Ele {
+    background-color: black;
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+    color: white;
+    text-align: center;
+    margin: 10px 0;
+}
+
+
+a:hover{
+    text-decoration: none;
+    color: black;
+
+
+}
+
+/* Global box sizing and base layout */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: linear-gradient(180deg,#fffaf6,#f7efe2);
+    color: #222;
+}
+
+#Contenedorvv
+
+#BarraArriba {
+    width: 100%;
+    max-width: 800px;
+    margin: 12px auto;
+    height: auto;
+    background: linear-gradient(90deg, #f7e6d6, #f2c7a1);
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.nav-logo {
+    font-family: 'Georgia', serif;
+    color: #7a2e0b;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links a {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #fff2e6;
+    color: #7a2e0b;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.nav-links a:hover, .nav-links a:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Hamburguesa */
+.nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap:4px;
+    border: 0;
+    background: #fff2e6;
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+.nav-toggle .bar {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #7a2e0b;
+    margin: 3px 0;
+    transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease, background .18s ease;
+    transform-origin: center;
+}
+
+.nav-toggle.open .bar:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+.nav-toggle.open .bar:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.nav-toggle.open .bar:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+#Contenedor { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+
+/* Reusable card class for consistent look */
+.card {
+    width: 100%;
+    max-width: 800px;
+    background: linear-gradient(90deg,#f6f0e6,#f2d7b7);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    margin: 20px auto;
+}
+
+#CajaGrande { padding: 20px; }
+
+
+
+#Cajita1 {
+    height: auto;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    animation: foodEntrance .6s ease-out both;
+    animation-delay: .12s;
+    transform-origin: center;
+}
+
+/* Accent modifier for highlighted cards */
+.card--accent {
+    border: 3px solid rgba(54,14,200,0.9);
+    padding: 12px;
+}
+
+/* Make direct child cards inside #CajaGrande use full width of the container */
+#CajaGrande > .card {
+    max-width: none;
+    width: 100%;
+    margin: 12px 0;
+}
+
+/* Food info styles */
+.food-info { display: flex; flex-direction: column; gap: 6px; }
+.food-title { margin: 0; font-size: 1.05rem; color: #2f1b10; font-weight: 700; }
+.food-price { margin: 0; color: #7a2e0b; font-weight: 700; }
+.food-desc { margin: 0; color: #5a4a3a; }
+
+#ContenidoCajita1 {
+    flex: 1;
+}
+
+#Cajita1 img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+#Cajita2 img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.food-card-hoverable:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+#Cajita2 {
+    height: auto;
+    display:flex;
+    align-items:center;
+    padding:10px;
+    gap:10px;
+    animation: foodEntrance .6s ease-out both;
+    animation-delay: .26s;
+    transform-origin: center;
+}
+
+#Cajita3 {
+    width: 100%;
+    height: auto;
+    background: linear-gradient(90deg,#f6f0e6,#f2d7b7);
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    margin: 12px 0 0 0;
+    display:flex;
+    align-items:center;
+    padding:12px;
+    animation: foodEntrance .6s ease-out both;
+    animation-delay: .4s;
+}
+
+@keyframes foodEntrance {
+    from {
+        transform: translateY(20px) rotate(-1deg) scale(.98);
+        opacity: 0;
+        filter: blur(4px);
+    }
+    to {
+        transform: translateY(0) rotate(0) scale(1);
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+/* Small responsive tweak */
+@media (max-width: 900px) {
+    #BarraArriba, #CajaGrande { padding-left: 12px; padding-right: 12px; }
+}
+
+@media (max-width: 640px) {
+    .nav-links { width: 100%; justify-content: center; }
+    .nav { flex-direction: column; align-items: stretch; gap: 8px; }
+    .nav-toggle { display: flex; }
+    .nav-links { display: none; flex-direction: column; gap: 8px; }
+    .nav-links.open { display: flex; }
+    #Cajita1, #Cajita2 { flex-direction: column; height: auto; }
+    #Cajita1 img { width: 100%; height: auto; }
+}
