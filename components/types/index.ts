@@ -1,0 +1,1 @@
+export type {Personaje} from "./personaje";

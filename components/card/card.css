@@ -1,0 +1,27 @@
+
+.card{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin: 10px;
+    padding: 20px;
+    max-width: 600px;
+    background-color: black;
+    color: white;
+    border-radius: 50px;
+    box-shadow: 13px 13px 19px 0px rgba(0,0,0,0.75);
+}
+
+.card img {
+    width: 150px;
+    height: auto;
+    border-radius: 20px;
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
