@@ -1,0 +1,72 @@
+/* Estilos del Dashboard del Alumno */
+
+/* Contenedor principal con flexbox para sidebar + contenido */
+.container {
+  display: flex;
+  height: 100vh;
+  background-color: #f2f4f8;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Área de contenido principal */
+.contenido {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sección de contenido */
+.seccion {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.seccion h1 {
+  color: #ff5800;
+  font-size: 32px;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.seccion p {
+  color: #555;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Datos del usuario */
+.datosUsuario {
+  background-color: #f3f4f6;
+  padding: 20px;
+  border-left: 4px solid #ff5800;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.datosUsuario p {
+  margin: 10px 0;
+  color: #333;
+}
+
+.datosUsuario strong {
+  color: #ff5800;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .contenido {
+    padding: 20px;
+  }
+
+  .seccion h1 {
+    font-size: 24px;
+  }
+}

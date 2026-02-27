@@ -1,0 +1,227 @@
+/* Estilos del Dashboard del Admin */
+
+/* Contenedor principal con flexbox para sidebar + contenido */
+.container {
+  display: flex;
+  height: 100vh;
+  background-color: #f2f4f8;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Área de contenido principal */
+.contenido {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sección de contenido */
+.seccion {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.seccion h1 {
+  color: #ff5800;
+  font-size: 32px;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.seccion h2 {
+  color: #ff5800;
+  font-size: 24px;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.seccion p {
+  color: #555;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Datos del usuario */
+.datosUsuario {
+  background-color: #f3f4f6;
+  padding: 20px;
+  border-left: 4px solid #ff5800;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.datosUsuario p {
+  margin: 10px 0;
+  color: #333;
+}
+
+.datosUsuario strong {
+  color: #ff5800;
+}
+
+/* Estilos para el formulario de usuarios */
+.formularioUsuario {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.formularioUsuario h3 {
+  color: #ff5800;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #ff5800;
+  box-shadow: 0 0 5px rgba(255, 88, 0, 0.3);
+}
+
+.botonesForm {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn.primary {
+  background-color: #ff5800;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #e64a00;
+}
+
+.btn.secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn.secondary:hover {
+  background-color: #545b62;
+}
+
+.btn.danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn.danger:hover {
+  background-color: #c82333;
+}
+
+/* Lista de usuarios */
+.usuariosList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.usuarioCard {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  transition: box-shadow 0.3s;
+}
+
+.usuarioCard:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.usuarioHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.usuarioHeader h3 {
+  margin: 0;
+  color: #333;
+}
+
+.usuarioInfo p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.usuarioActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .contenido {
+    padding: 20px;
+  }
+
+  .seccion h1 {
+    font-size: 24px;
+  }
+
+  .seccion h2 {
+    font-size: 20px;
+  }
+
+  .botonesForm {
+    flex-direction: column;
+  }
+
+  .usuarioHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .usuarioActions {
+    flex-direction: column;
+  }
+}
