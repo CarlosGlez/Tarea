@@ -6,6 +6,9 @@ interface LoginResponse {
     id: number
     nombre_usuario: string
     rol: string
+    nombre?: string
+    apellido?: string
+    correo?: string
   }
 }
 

@@ -2,16 +2,22 @@ import { useState } from "react"
 import { useUsuarios } from "../hooks/useUsuarios"
 import type { Usuario } from "../types/Usuario"
 import styles from "../pages/AdminDashboard.module.css"
+import { getAlumnoDatos, updateAlumnoDatos, getCoordinadorDatos, updateCoordinadorDatos } from "../data/usuariosService"
 
 export const UsuariosList = () => {
   const { usuarios, loading, addUsuario, editUsuario, removeUsuario } = useUsuarios()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [datosPersonalesOpen, setDatosPersonalesOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<Usuario | null>(null)
+  const [datosPersonalesData, setDatosPersonalesData] = useState<any>(null)
+  const [loadingDatos, setLoadingDatos] = useState(false)
   const [formData, setFormData] = useState({
     nombre_usuario: '',
     correo: '',
     contrasena: '',
     rol: 'alumno'
   })
+  const [datosPersonalesForm, setDatosPersonalesForm] = useState<any>({})
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,11 +28,10 @@ export const UsuariosList = () => {
         rol: formData.rol,
         ...(formData.contrasena && { contrasena: formData.contrasena })
       })
-      setEditingUser(null)
     } else {
       await addUsuario(formData)
     }
-    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno' })
+    closeModal()
   }
 
   const handleEdit = (user: Usuario) => {
@@ -37,6 +42,13 @@ export const UsuariosList = () => {
       contrasena: '',
       rol: user.rol
     })
+    setModalOpen(true)
+  }
+
+  const handleCreateNew = () => {
+    setEditingUser(null)
+    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno' })
+    setModalOpen(true)
   }
 
   const handleDelete = async (id: number) => {
@@ -45,120 +57,403 @@ export const UsuariosList = () => {
     }
   }
 
+  const closeModal = () => {
+    setModalOpen(false)
+    setEditingUser(null)
+    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno' })
+  }
+
+  const closeDatosPersonalesModal = () => {
+    setDatosPersonalesOpen(false)
+    setDatosPersonalesData(null)
+    setDatosPersonalesForm({})
+  }
+
+  const handleOpenDatosPersonales = async () => {
+    if (!editingUser) return
+    
+    setLoadingDatos(true)
+    try {
+      let datos
+      if (editingUser.rol === 'alumno') {
+        datos = await getAlumnoDatos(editingUser.id)
+      } else if (editingUser.rol === 'coordinador') {
+        datos = await getCoordinadorDatos(editingUser.id)
+      } else {
+        alert('Solo se pueden editar datos personales de alumnos y coordinadores')
+        setLoadingDatos(false)
+        return
+      }
+      
+      setDatosPersonalesData(datos)
+      setDatosPersonalesForm({
+        nombre: datos.nombre || '',
+        apellido: datos.apellido || '',
+        ...(editingUser.rol === 'alumno' && {
+          numero_telefono: datos.numero_telefono || '',
+          numero_identificacion: datos.numero_identificacion || '',
+          fecha_nacimiento: datos.fecha_nacimiento ? datos.fecha_nacimiento.split('T')[0] : '',
+        }),
+        ...(editingUser.rol === 'coordinador' && {
+          telefono: datos.telefono || '',
+          numero_identificacion: datos.numero_identificacion || '',
+          oficina: datos.oficina || '',
+          horario_atencion: datos.horario_atencion || '',
+          especialidad: datos.especialidad || '',
+          fecha_nacimiento: datos.fecha_nacimiento ? datos.fecha_nacimiento.split('T')[0] : '',
+        })
+      })
+      setDatosPersonalesOpen(true)
+      setModalOpen(false)
+    } catch (error) {
+      console.error('Error cargando datos personales:', error)
+      alert(`Error al cargar los datos personales: ${error.message || 'Error desconocido'}`)
+    } finally {
+      setLoadingDatos(false)
+    }
+  }
+
+  const handleSaveDatosPersonales = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+
+    try {
+      if (editingUser.rol === 'alumno') {
+        await updateAlumnoDatos(editingUser.id, datosPersonalesForm)
+      } else if (editingUser.rol === 'coordinador') {
+        await updateCoordinadorDatos(editingUser.id, datosPersonalesForm)
+      }
+      
+      alert('Datos personales actualizados exitosamente')
+      closeDatosPersonalesModal()
+      closeModal()
+    } catch (error) {
+      console.error('Error actualizando datos personales:', error)
+      alert(`Error al actualizar los datos personales: ${error.message || 'Error desconocido'}`)
+    }
+  }
+
+  const getRolColor = (rol: string) => {
+    switch (rol) {
+      case 'admin':
+        return '#ff5800'
+      case 'coordinador':
+        return '#007bff'
+      case 'alumno':
+        return '#28a745'
+      default:
+        return '#6c757d'
+    }
+  }
+
   if (loading) return <p>Cargando usuarios...</p>
 
   return (
     <div>
-      {/* Formulario para crear/editar usuario */}
-      <div className={styles.formularioUsuario}>
-        <h3>{editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
-        <form onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label htmlFor="nombre_usuario">Nombre de Usuario:</label>
-            <input
-              id="nombre_usuario"
-              type="text"
-              placeholder="Ingresa el nombre de usuario"
-              value={formData.nombre_usuario}
-              onChange={(e) => setFormData({ ...formData, nombre_usuario: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="correo">Correo Electrónico:</label>
-            <input
-              id="correo"
-              type="email"
-              placeholder="Ingresa el correo electrónico"
-              value={formData.correo}
-              onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="contrasena">Contraseña:</label>
-            <input
-              id="contrasena"
-              type="password"
-              placeholder={editingUser ? "Deja vacío para mantener la actual" : "Ingresa la contraseña"}
-              value={formData.contrasena}
-              onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
-              required={!editingUser}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="rol">Rol:</label>
-            <select
-              id="rol"
-              value={formData.rol}
-              onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
-            >
-              <option value="alumno">Alumno</option>
-              <option value="coordinador">Coordinador</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
-
-          <div className={styles.botonesForm}>
-            <button type="submit" className={`${styles.btn} ${styles.primary}`}>
-              {editingUser ? 'Actualizar Usuario' : 'Crear Usuario'}
-            </button>
-            {editingUser && (
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.secondary}`}
-                onClick={() => setEditingUser(null)}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
+      {/* Botón para crear nuevo usuario */}
+      <div className={styles.createButtonContainer}>
+        <button
+          className={`${styles.btn} ${styles.primary}`}
+          onClick={handleCreateNew}
+        >
+          <i className="fas fa-plus"></i> Crear Nuevo Usuario
+        </button>
       </div>
 
-      {/* Lista de usuarios */}
-      <div className={styles.usuariosList}>
-        {usuarios.map(u => (
-          <div key={u.id} className={styles.usuarioCard}>
-            <div className={styles.usuarioHeader}>
-              <h3>{u.nombre_usuario}</h3>
-              <span style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                backgroundColor: u.rol === 'admin' ? '#ff5800' : u.rol === 'coordinador' ? '#007bff' : '#28a745',
-                color: 'white'
-              }}>
-                {u.rol}
-              </span>
-            </div>
-
-            <div className={styles.usuarioInfo}>
-              <p><strong>Correo:</strong> {u.correo}</p>
-              <p><strong>Fecha de creación:</strong> {new Date(u.fecha_creacion).toLocaleDateString('es-ES')}</p>
-            </div>
-
-            <div className={styles.usuarioActions}>
-              <button
-                className={`${styles.btn} ${styles.primary}`}
-                onClick={() => handleEdit(u)}
-              >
-                <i className="fas fa-edit"></i> Editar
-              </button>
-              <button
-                className={`${styles.btn} ${styles.danger}`}
-                onClick={() => handleDelete(u.id)}
-              >
-                <i className="fas fa-trash"></i> Eliminar
+      {/* Modal para crear o editar usuario */}
+      {modalOpen && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>{editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h2>
+              <button className={styles.closeButton} onClick={closeModal}>
+                <i className="fas fa-times"></i>
               </button>
             </div>
+            <form onSubmit={handleSubmit}>
+              <div className={styles.formGroup}>
+                <label htmlFor="nombre_usuario">Nombre de Usuario:</label>
+                <input
+                  id="nombre_usuario"
+                  type="text"
+                  placeholder="Ingresa el nombre de usuario"
+                  value={formData.nombre_usuario}
+                  onChange={(e) => setFormData({ ...formData, nombre_usuario: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="correo">Correo Electrónico:</label>
+                <input
+                  id="correo"
+                  type="email"
+                  placeholder="Ingresa el correo electrónico"
+                  value={formData.correo}
+                  onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="contrasena">Contraseña:</label>
+                <input
+                  id="contrasena"
+                  type="password"
+                  placeholder={editingUser ? "Deja vacío para mantener la actual" : "Ingresa la contraseña"}
+                  value={formData.contrasena}
+                  onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
+                  required={!editingUser}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="rol">Rol:</label>
+                <select
+                  id="rol"
+                  value={formData.rol}
+                  onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
+                >
+                  <option value="alumno">Alumno</option>
+                  <option value="coordinador">Coordinador</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+
+              <div className={styles.botonesForm}>
+                <button type="submit" className={`${styles.btn} ${styles.primary}`}>
+                  <i className="fas fa-save"></i> {editingUser ? 'Guardar Cambios' : 'Crear Usuario'}
+                </button>
+                {editingUser && editingUser.rol !== 'admin' && (
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.warning}`}
+                    onClick={handleOpenDatosPersonales}
+                    disabled={loadingDatos}
+                  >
+                    <i className="fas fa-user-edit"></i> Datos Personales
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.secondary}`}
+                  onClick={closeModal}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* Modal para editar datos personales */}
+      {datosPersonalesOpen && editingUser && (
+        <div className={styles.modalOverlay} onClick={closeDatosPersonalesModal}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>
+                {editingUser.rol === 'alumno' ? 'Datos del Alumno' : 'Datos del Coordinador'}
+              </h2>
+              <button className={styles.closeButton} onClick={closeDatosPersonalesModal}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form onSubmit={handleSaveDatosPersonales}>
+              <div className={styles.formGroup}>
+                <label htmlFor="nombre">Nombre:</label>
+                <input
+                  id="nombre"
+                  type="text"
+                  placeholder="Nombre"
+                  value={datosPersonalesForm.nombre || ''}
+                  onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, nombre: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="apellido">Apellido:</label>
+                <input
+                  id="apellido"
+                  type="text"
+                  placeholder="Apellido"
+                  value={datosPersonalesForm.apellido || ''}
+                  onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, apellido: e.target.value })}
+                  required
+                />
+              </div>
+
+              {editingUser.rol === 'alumno' && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="numero_telefono">Teléfono:</label>
+                    <input
+                      id="numero_telefono"
+                      type="tel"
+                      placeholder="Número de teléfono"
+                      value={datosPersonalesForm.numero_telefono || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, numero_telefono: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="numero_identificacion">Número de Identificación:</label>
+                    <input
+                      id="numero_identificacion"
+                      type="text"
+                      placeholder="Cédula o DNI"
+                      value={datosPersonalesForm.numero_identificacion || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, numero_identificacion: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="fecha_nacimiento">Fecha de Nacimiento:</label>
+                    <input
+                      id="fecha_nacimiento"
+                      type="date"
+                      value={datosPersonalesForm.fecha_nacimiento || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, fecha_nacimiento: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+
+              {editingUser.rol === 'coordinador' && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="telefono">Teléfono:</label>
+                    <input
+                      id="telefono"
+                      type="tel"
+                      placeholder="Número de teléfono"
+                      value={datosPersonalesForm.telefono || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, telefono: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="numero_identificacion_coord">Número de Identificación:</label>
+                    <input
+                      id="numero_identificacion_coord"
+                      type="text"
+                      placeholder="Cédula o DNI"
+                      value={datosPersonalesForm.numero_identificacion || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, numero_identificacion: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="oficina">Oficina:</label>
+                    <input
+                      id="oficina"
+                      type="text"
+                      placeholder="Ubicación de oficina"
+                      value={datosPersonalesForm.oficina || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, oficina: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="horario_atencion">Horario de Atención:</label>
+                    <input
+                      id="horario_atencion"
+                      type="text"
+                      placeholder="Ej: Lunes a Viernes 9:00-17:00"
+                      value={datosPersonalesForm.horario_atencion || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, horario_atencion: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="especialidad">Especialidad:</label>
+                    <input
+                      id="especialidad"
+                      type="text"
+                      placeholder="Especialidad académica"
+                      value={datosPersonalesForm.especialidad || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, especialidad: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="fecha_nacimiento_coord">Fecha de Nacimiento:</label>
+                    <input
+                      id="fecha_nacimiento_coord"
+                      type="date"
+                      value={datosPersonalesForm.fecha_nacimiento || ''}
+                      onChange={(e) => setDatosPersonalesForm({ ...datosPersonalesForm, fecha_nacimiento: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className={styles.botonesForm}>
+                <button type="submit" className={`${styles.btn} ${styles.primary}`}>
+                  <i className="fas fa-save"></i> Guardar Datos
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.secondary}`}
+                  onClick={closeDatosPersonalesModal}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Tabla de usuarios */}
+      <div className={styles.tableContainer}>
+        <table className={styles.usuariosTable}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre de Usuario</th>
+              <th>Tipo de Usuario</th>
+              <th>Correo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usuarios.map(u => (
+              <tr key={u.id}>
+                <td>{u.id}</td>
+                <td>{u.nombre_usuario}</td>
+                <td>
+                  <span
+                    className={styles.rolBadge}
+                    style={{ backgroundColor: getRolColor(u.rol) }}
+                  >
+                    {u.rol.charAt(0).toUpperCase() + u.rol.slice(1)}
+                  </span>
+                </td>
+                <td>{u.correo}</td>
+                <td>
+                  <div className={styles.tableActions}>
+                    <button
+                      className={`${styles.btn} ${styles.primary} ${styles.btnSmall}`}
+                      onClick={() => handleEdit(u)}
+                      title="Editar usuario"
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                      className={`${styles.btn} ${styles.danger} ${styles.btnSmall}`}
+                      onClick={() => handleDelete(u.id)}
+                      title="Eliminar usuario"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

@@ -10,6 +10,8 @@ import db from './config/db.js'
 // Importar rutas de la aplicación
 import usuariosRoutes from './routes/usuarios.routes.js'
 import authRoutes from './routes/auth.routes.js'
+import carrerasRoutes from './routes/carreras.routes.js'
+import coordinadorRoutes from './routes/coordinador.routes.js'
 
 // Crear instancia de Express
 const app = express()
@@ -25,6 +27,8 @@ app.use(express.json())
 // Rutas de la API
 app.use('/api/usuarios', usuariosRoutes)  // Rutas para gestión de usuarios
 app.use('/api/auth', authRoutes)          // Rutas de autenticación
+app.use('/api/carreras', carrerasRoutes)  // Rutas para gestión de carreras
+app.use('/api/coordinador', coordinadorRoutes)  // Rutas para coordinadores
 
 // Endpoint de health check para verificar conexión a BD
 app.get('/api/health', (req, res) => {

@@ -150,6 +150,15 @@
   background-color: #c82333;
 }
 
+.btn.warning {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.btn.warning:hover {
+  background-color: #e0a800;
+}
+
 /* Lista de usuarios */
 .usuariosList {
   display: flex;
@@ -193,6 +202,172 @@
   margin-top: 15px;
 }
 
+/* Botón para crear usuario */
+.createButtonContainer {
+  margin-bottom: 20px;
+}
+
+/* Estilos para la tabla de usuarios */
+.tableContainer {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.usuariosTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.usuariosTable thead {
+  background-color: #ff5800;
+  color: white;
+  font-weight: bold;
+}
+
+.usuariosTable th {
+  padding: 15px;
+  text-align: left;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.usuariosTable td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+  color: #333;
+}
+
+.usuariosTable tbody tr {
+  transition: background-color 0.2s;
+}
+
+.usuariosTable tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.usuariosTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badge para el rol */
+.rolBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}
+
+/* Acciones en la tabla */
+.tableActions {
+  display: flex;
+  gap: 8px;
+}
+
+.btnSmall {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+/* Estilos para el Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-in-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: #ff5800;
+  font-size: 24px;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal form {
+  padding: 20px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {
@@ -223,5 +398,45 @@
 
   .usuarioActions {
     flex-direction: column;
+  }
+
+  /* Tabla responsive */
+  .tableContainer {
+    overflow-x: auto;
+  }
+
+  .usuariosTable {
+    font-size: 13px;
+  }
+
+  .usuariosTable th,
+  .usuariosTable td {
+    padding: 10px 8px;
+  }
+
+  .tableActions {
+    flex-direction: column;
+  }
+
+  .btnSmall {
+    width: 100% !important;
+  }
+
+  /* Modal responsive */
+  .modal {
+    width: 95% !important;
+    max-width: 100% !important;
+  }
+
+  .modalHeader {
+    padding: 15px;
+  }
+
+  .modalHeader h2 {
+    font-size: 20px;
+  }
+
+  .modal form {
+    padding: 15px;
   }
 }

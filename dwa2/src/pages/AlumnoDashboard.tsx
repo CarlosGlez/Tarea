@@ -1,19 +1,43 @@
 import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { MateriasListAlumno } from "../components/MateriasListAlumno"
+import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
 import styles from "./AlumnoDashboard.module.css"
 
 export const AlumnoDashboard = () => {
-  // Estado para guardar datos del usuario
-  const [usuario, setUsuario] = useState<any>(null)
+  // Estado para guardar datos del usuario (incluye nombre completo, correo, etc.)
+  const [usuario, setUsuario] = useState<AlumnoDatos | null>(null)
   // Estado para controlar qué sección se muestra
   const [seccionActual, setSeccionActual] = useState("inicio")
 
-  // Cargar datos del usuario desde localStorage
+  // Cargar datos del usuario desde el backend usando el ID almacenado
   useEffect(() => {
-    const nombre = localStorage.getItem("nombre")
-    const rol = localStorage.getItem("rol")
-    setUsuario({ nombre, rol })
+    const id = Number(localStorage.getItem("userId"))
+    if (!id) return
+
+    // set initial info from localStorage if available (login may have provided nombre/apellido)
+    const nombreReal = localStorage.getItem("nombre_real") || ''
+    const apellido = localStorage.getItem("apellido") || ''
+    const correo = localStorage.getItem("correo") || ''
+    // crear un objeto mínimo con los campos obligatorios para evitar errores de tipo
+    setUsuario({
+      id,
+      nombre_usuario: '',
+      nombre: nombreReal,
+      apellido,
+      correo,
+      rol: '',
+      fecha_creacion: ''
+    })
+
+    // then fetch full datos from servidor
+    getAlumnoDatos(id)
+      .then((data) => {
+        setUsuario(data)
+      })
+      .catch((err) => {
+        console.error("Error al obtener datos de alumno:", err)
+      })
   }, [])
 
   // Función para logout
@@ -21,6 +45,9 @@ export const AlumnoDashboard = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("rol")
     localStorage.removeItem("nombre")
+    localStorage.removeItem("nombre_real")
+    localStorage.removeItem("apellido")
+    localStorage.removeItem("correo")
     window.location.hash = ""
   }
 
@@ -42,12 +69,23 @@ export const AlumnoDashboard = () => {
         {/* Sección de Inicio */}
         {seccionActual === "inicio" && (
           <div className={styles.seccion}>
-            <h1>Bienvenido, {usuario?.nombre_usuario}</h1>
+            <h1>Bienvenido, {usuario ? `${usuario.nombre} ${usuario.apellido}` : '...'}</h1>
             <p>Este es tu panel de control como alumno.</p>
             {usuario && (
               <div className={styles.datosUsuario}>
-                <p><strong>Nombre:</strong> {usuario.nombre_usuario}</p>
-                <p><strong>Rol:</strong> {usuario.rol}</p>
+                <img
+                  src={usuario.imagen_url || 'https://via.placeholder.com/150'}
+                  alt="Foto del alumno"
+                  className={styles.avatar}
+                />
+                <p><strong>Nombre completo:</strong> {usuario.nombre} {usuario.apellido}</p>
+                <p><strong>Correo:</strong> {usuario.correo}</p>
+                <p>
+                  <strong>Fecha de nacimiento:</strong>{' '}
+                  {usuario && usuario.fecha_nacimiento
+                    ? new Date(usuario.fecha_nacimiento).toLocaleDateString()
+                    : 'No especificada'}
+                </p>
               </div>
             )}
           </div>

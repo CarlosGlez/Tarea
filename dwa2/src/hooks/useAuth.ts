@@ -1,3 +1,4 @@
+
 // Hook personalizado para manejar autenticación
 import { useState } from "react"
 import { loginRequest } from "../data/authService"
@@ -19,6 +20,18 @@ export const useAuth = () => {
       localStorage.setItem("rol", data.usuario.rol)
       localStorage.setItem("nombre", data.usuario.nombre_usuario)
       localStorage.setItem("userId", String(data.usuario.id))
+      // también podemos guardar nombre real y correo si vienen en la respuesta
+      if (data.usuario.nombre) localStorage.setItem("nombre_real", data.usuario.nombre)
+      if (data.usuario.apellido) localStorage.setItem("apellido", data.usuario.apellido)
+      if (data.usuario.correo) localStorage.setItem("correo", data.usuario.correo)
+
+      // Si es coordinador, guardar información de su carrera
+      if (data.usuario.rol === 'coordinador') {
+        localStorage.setItem("carrera_id", String(data.usuario.carrera_id || ""))
+        localStorage.setItem("carrera_nombre", data.usuario.carrera_nombre || "")
+        localStorage.setItem("carrera_abreviatura", data.usuario.carrera_abreviatura || "")
+        localStorage.setItem("rol_cargo", data.usuario.rol_cargo || "coordinador")
+      }
 
       // Retornar rol para redirección
       return data.usuario.rol

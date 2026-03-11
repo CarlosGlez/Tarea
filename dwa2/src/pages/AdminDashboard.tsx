@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { UsuariosList } from "../components/UsuariosList"
+import { CarrerasList } from "../components/CarrerasList"
 import styles from "./AdminDashboard.module.css"
 
 export const AdminDashboard = () => {
@@ -28,6 +29,7 @@ export const AdminDashboard = () => {
   const menuItems = [
     { label: "Inicio", icon: "fa-home", onClick: () => setSeccionActual("inicio") },
     { label: "Gestión de Usuarios", icon: "fa-users", onClick: () => setSeccionActual("usuarios") },
+    { label: "Gestión de Carreras", icon: "fa-graduation-cap", onClick: () => setSeccionActual("carreras") },
     { label: "Cerrar sesión", icon: "fa-sign-out-alt", onClick: handleLogout },
   ]
 
@@ -58,6 +60,15 @@ export const AdminDashboard = () => {
             <h1>Gestión de Usuarios</h1>
             <p>Administra los usuarios del sistema: crea nuevos usuarios, edita información existente y elimina usuarios cuando sea necesario.</p>
             <UsuariosList />
+          </div>
+        )}
+
+        {/* Sección de Gestión de Carreras */}
+        {seccionActual === "carreras" && (
+          <div className={styles.seccion}>
+            <h1>Gestión de Carreras</h1>
+            <p>Visualiza todas las carreras, sus planes de estudio y los alumnos inscritos.</p>
+            <CarrerasList />
           </div>
         )}
       </div>

@@ -65,14 +65,48 @@ router.post('/login', async (req, res) => {
       )
 
       // Responder con token y datos del usuario
-      res.json({
+      const respuesta = {
         token,
         usuario: {
           id: user.id,
           nombre_usuario: user.nombre_usuario,
-          rol: user.rol
+          rol: user.rol,
+          // añadir campos personales si ya están en la tabla usuarios
+          nombre: user.nombre || '',
+          apellido: user.apellido || '',
+          correo: user.correo || ''
         }
-      })
+      }
+
+      // Si es coordinador, obtener su carrera asignada
+      if (user.rol === 'coordinador') {
+        db.query(
+          `SELECT cc.id as coordinador_carrera_id, cc.carrera_id, c.nombre as carrera_nombre, 
+                  c.abreviatura as carrera_abreviatura, cc.rol_cargo
+           FROM coordinador_carrera cc
+           JOIN carreras c ON cc.carrera_id = c.id
+           WHERE cc.coordinador_id = ? AND cc.activo = 1`,
+          [user.id],
+          (err, carreraResults) => {
+            if (err) {
+              console.log("Error al obtener carrera del coordinador:", err)
+              return res.status(500).json(err)
+            }
+
+            if (carreraResults.length > 0) {
+              const carrera = carreraResults[0]
+              respuesta.usuario.carrera_id = carrera.carrera_id
+              respuesta.usuario.carrera_nombre = carrera.carrera_nombre
+              respuesta.usuario.carrera_abreviatura = carrera.carrera_abreviatura
+              respuesta.usuario.rol_cargo = carrera.rol_cargo
+            }
+
+            res.json(respuesta)
+          }
+        )
+      } else {
+        res.json(respuesta)
+      }
     }
   )
 })
