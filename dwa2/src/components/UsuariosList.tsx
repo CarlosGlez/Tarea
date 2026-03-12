@@ -1,23 +1,73 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useUsuarios } from "../hooks/useUsuarios"
 import type { Usuario } from "../types/Usuario"
+import type { Alumno, Carrera, PlanEstudio } from "../types/Carrera"
 import styles from "../pages/AdminDashboard.module.css"
 import { getAlumnoDatos, updateAlumnoDatos, getCoordinadorDatos, updateCoordinadorDatos } from "../data/usuariosService"
+import * as carrerasService from "../data/carrerasService"
 
-export const UsuariosList = () => {
+interface UsuariosListProps {
+  carreraId?: number | null
+  alumnosFiltrados?: Alumno[]
+  soloVisualizacion?: boolean
+  onAlumnoCreated?: () => void
+}
+
+export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = false, onAlumnoCreated }: UsuariosListProps) => {
   const { usuarios, loading, addUsuario, editUsuario, removeUsuario } = useUsuarios()
+  const [carreras, setCarreras] = useState<Carrera[]>([])
+  const [planes, setPlanes] = useState<PlanEstudio[]>([])
+  const [loadingCarreras, setLoadingCarreras] = useState(false)
+  
+  // Usar alumnos filtrados si se proporcionan, de lo contrario usar todos los usuarios
+  const usuariosAMostrar = alumnosFiltrados && carreraId ? alumnosFiltrados : usuarios
   const [modalOpen, setModalOpen] = useState(false)
   const [datosPersonalesOpen, setDatosPersonalesOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<Usuario | null>(null)
-  const [datosPersonalesData, setDatosPersonalesData] = useState<any>(null)
   const [loadingDatos, setLoadingDatos] = useState(false)
   const [formData, setFormData] = useState({
     nombre_usuario: '',
     correo: '',
     contrasena: '',
-    rol: 'alumno'
+    rol: 'alumno',
+    carrera_id: '',
+    plan_id: ''
   })
-  const [datosPersonalesForm, setDatosPersonalesForm] = useState<any>({})
+  const [datosPersonalesForm, setDatosPersonalesForm] = useState<Record<string, string | number | undefined>>({})
+  
+  // Cargar carreras al montar
+  useEffect(() => {
+    const cargarCarreras = async () => {
+      setLoadingCarreras(true)
+      try {
+        const datos = await carrerasService.getCarreras()
+        setCarreras(datos)
+      } catch (error) {
+        console.error('Error cargando carreras:', error)
+      } finally {
+        setLoadingCarreras(false)
+      }
+    }
+    cargarCarreras()
+  }, [])
+  
+  // Cargar planes cuando cambia la carrera seleccionada
+  useEffect(() => {
+    const cargarPlanes = async () => {
+      if (!formData.carrera_id) {
+        setPlanes([])
+        return
+      }
+      try {
+        const datos = await carrerasService.getPlanesByCarrera(parseInt(formData.carrera_id))
+        setPlanes(datos)
+      } catch (error) {
+        console.error('Error cargando planes:', error)
+        setPlanes([])
+      }
+    }
+    cargarPlanes()
+  }, [formData.carrera_id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,25 +79,54 @@ export const UsuariosList = () => {
         ...(formData.contrasena && { contrasena: formData.contrasena })
       })
     } else {
-      await addUsuario(formData)
+      // Validar que si es alumno o coordinador, tenga carrera asignada
+      if ((formData.rol === 'alumno' || formData.rol === 'coordinador') && !formData.carrera_id) {
+        alert('Debes seleccionar una carrera')
+        return
+      }
+      
+      if (formData.rol === 'alumno' && !formData.plan_id) {
+        alert('Debes seleccionar un plan de estudio')
+        return
+      }
+      
+      await addUsuario({
+        ...formData,
+        carrera_id: formData.carrera_id ? parseInt(formData.carrera_id) : undefined,
+        plan_id: formData.plan_id ? parseInt(formData.plan_id) : undefined
+      })
+      
+      // Si se creó un alumno y hay callback, ejecutarlo
+      if (formData.rol === 'alumno' && onAlumnoCreated) {
+        onAlumnoCreated()
+      }
     }
     closeModal()
   }
 
-  const handleEdit = (user: Usuario) => {
-    setEditingUser(user)
+  const handleEdit = (user: Usuario | Alumno) => {
+    setEditingUser(user as Usuario)
     setFormData({
       nombre_usuario: user.nombre_usuario,
-      correo: user.correo,
+      correo: user.correo || '',
       contrasena: '',
-      rol: user.rol
+      rol: user.rol,
+      carrera_id: '',
+      plan_id: ''
     })
     setModalOpen(true)
   }
 
   const handleCreateNew = () => {
     setEditingUser(null)
-    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno' })
+    setFormData({ 
+      nombre_usuario: '', 
+      correo: '', 
+      contrasena: '', 
+      rol: 'alumno',
+      carrera_id: '',
+      plan_id: ''
+    })
     setModalOpen(true)
   }
 
@@ -60,12 +139,11 @@ export const UsuariosList = () => {
   const closeModal = () => {
     setModalOpen(false)
     setEditingUser(null)
-    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno' })
+    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno', carrera_id: '', plan_id: '' })
   }
 
   const closeDatosPersonalesModal = () => {
     setDatosPersonalesOpen(false)
-    setDatosPersonalesData(null)
     setDatosPersonalesForm({})
   }
 
@@ -85,7 +163,6 @@ export const UsuariosList = () => {
         return
       }
       
-      setDatosPersonalesData(datos)
       setDatosPersonalesForm({
         nombre: datos.nombre || '',
         apellido: datos.apellido || '',
@@ -107,7 +184,8 @@ export const UsuariosList = () => {
       setModalOpen(false)
     } catch (error) {
       console.error('Error cargando datos personales:', error)
-      alert(`Error al cargar los datos personales: ${error.message || 'Error desconocido'}`)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      alert(`Error al cargar los datos personales: ${errorMessage}`)
     } finally {
       setLoadingDatos(false)
     }
@@ -129,7 +207,8 @@ export const UsuariosList = () => {
       closeModal()
     } catch (error) {
       console.error('Error actualizando datos personales:', error)
-      alert(`Error al actualizar los datos personales: ${error.message || 'Error desconocido'}`)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      alert(`Error al actualizar los datos personales: ${errorMessage}`)
     }
   }
 
@@ -150,15 +229,17 @@ export const UsuariosList = () => {
 
   return (
     <div>
-      {/* Botón para crear nuevo usuario */}
-      <div className={styles.createButtonContainer}>
-        <button
-          className={`${styles.btn} ${styles.primary}`}
-          onClick={handleCreateNew}
-        >
-          <i className="fas fa-plus"></i> Crear Nuevo Usuario
-        </button>
-      </div>
+      {/* Botón para crear nuevo usuario - solo si es vista de admin */}
+      {!soloVisualizacion && (
+        <div className={styles.createButtonContainer}>
+          <button
+            className={`${styles.btn} ${styles.primary}`}
+            onClick={handleCreateNew}
+          >
+            <i className="fas fa-plus"></i> Crear Nuevo Usuario
+          </button>
+        </div>
+      )}
 
       {/* Modal para crear o editar usuario */}
       {modalOpen && (
@@ -219,6 +300,54 @@ export const UsuariosList = () => {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
+
+              {!editingUser && (formData.rol === 'alumno' || formData.rol === 'coordinador') && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="carrera_id">Carrera:</label>
+                    <select
+                      id="carrera_id"
+                      value={formData.carrera_id}
+                      onChange={(e) => setFormData({ ...formData, carrera_id: e.target.value, plan_id: '' })}
+                      required={!editingUser && (formData.rol === 'alumno' || formData.rol === 'coordinador')}
+                    >
+                      <option value="">Selecciona una carrera</option>
+                      {loadingCarreras ? (
+                        <option>Cargando...</option>
+                      ) : (
+                        carreras.map((carrera) => (
+                          <option key={carrera.id} value={carrera.id}>
+                            {carrera.nombre}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  {formData.rol === 'alumno' && (
+                    <div className={styles.formGroup}>
+                      <label htmlFor="plan_id">Plan de Estudio:</label>
+                      <select
+                        id="plan_id"
+                        value={formData.plan_id}
+                        onChange={(e) => setFormData({ ...formData, plan_id: e.target.value })}
+                        required={!editingUser && formData.rol === 'alumno'}
+                      >
+                        <option value="">Selecciona un plan</option>
+                        {formData.carrera_id ? (
+                          planes.map((plan) => (
+                            <option key={plan.id} value={plan.id}>
+                              {plan.nombre}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>Selecciona una carrera primero</option>
+                        )}
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
 
               <div className={styles.botonesForm}>
                 <button type="submit" className={`${styles.btn} ${styles.primary}`}>
@@ -419,7 +548,7 @@ export const UsuariosList = () => {
             </tr>
           </thead>
           <tbody>
-            {usuarios.map(u => (
+            {usuariosAMostrar.map(u => (
               <tr key={u.id}>
                 <td>{u.id}</td>
                 <td>{u.nombre_usuario}</td>
