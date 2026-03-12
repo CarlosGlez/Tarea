@@ -1,0 +1,73 @@
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+  padding: 20px;
+  position: relative;
+  transition: width 0.3s;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.logo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo h2 {
+  color: #ff5800;
+  margin: 0;
+}
+
+.toggle-btn {
+  cursor: pointer;
+  color: #ff5800;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin-top: 30px;
+}
+
+.menu li {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  color: #333;
+}
+
+.menu li i {
+  margin-right: 10px;
+  color: #ff5800;
+}
+
+.menu li a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.bottom-icon {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  color: #ff5800;
+}
+
+.contenido {
+  flex: 1;
+  display: flex;
+  justify-content: center;  /* centra horizontalmente */
+  align-items: start;        /* si quieres centrar verticalmente: center */
+  padding: 30px;
+}
