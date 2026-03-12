@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import * as coordinadorService from "../data/coordinadorService"
 import type { Alumno } from "../types/Carrera"
 
@@ -36,29 +36,35 @@ export const useAlumnosByCarrera = (carreraId: number | null) => {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const cargarAlumnos = async () => {
-      if (!carreraId) {
-        setCargando(false)
-        return
-      }
-      try {
-        setCargando(true)
-        const datos = await coordinadorService.getAlumnosByCarrera(carreraId)
-        setAlumnos(datos)
-        setError(null)
-      } catch (err) {
-        setError("Error al cargar alumnos")
-        console.error(err)
-      } finally {
-        setCargando(false)
-      }
+  const cargarAlumnos = useCallback(async () => {
+    if (!carreraId) {
+      setAlumnos([])
+      setCargando(false)
+      return
     }
-
-    cargarAlumnos()
+    try {
+      setCargando(true)
+      const datos = await coordinadorService.getAlumnosByCarrera(carreraId)
+      setAlumnos(datos)
+      setError(null)
+    } catch (err) {
+      setError("Error al cargar alumnos")
+      console.error(err)
+      setAlumnos([])
+    } finally {
+      setCargando(false)
+    }
   }, [carreraId])
 
-  return { alumnos, cargando, error }
+  useEffect(() => {
+    cargarAlumnos()
+  }, [cargarAlumnos])
+
+  const refetch = useCallback(() => {
+    cargarAlumnos()
+  }, [cargarAlumnos])
+
+  return { alumnos, cargando, error, refetch }
 }
 
 // Hook para obtener materias de la carrera

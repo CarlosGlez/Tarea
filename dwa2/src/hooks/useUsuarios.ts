@@ -20,7 +20,7 @@ export const useUsuarios = () => {
     fetchUsuarios()
   }, [])
 
-  const addUsuario = async (usuario: Omit<Usuario, 'id' | 'fecha_creacion'> & { contrasena: string }) => {
+  const addUsuario = async (usuario: (Omit<Usuario, 'id' | 'fecha_creacion'> & { contrasena: string }) | any) => {
     await createUsuario(usuario)
     await fetchUsuarios()
   }

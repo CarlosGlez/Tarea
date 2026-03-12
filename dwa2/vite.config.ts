@@ -7,5 +7,6 @@ export default defineConfig({
   base: '/Tarea/',
   server: {
     port: 5173,
+    strictPort: true,
   },
 })

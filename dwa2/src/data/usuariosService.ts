@@ -18,7 +18,7 @@ export const getUsuarios = async (): Promise<Usuario[]> => {
   return await response.json()
 }
 
-export const createUsuario = async (usuario: Omit<Usuario, 'id' | 'fecha_creacion'> & { contrasena: string }): Promise<{ id: number }> => {
+export const createUsuario = async (usuario: (Omit<Usuario, 'id' | 'fecha_creacion'> & { contrasena: string }) | any): Promise<{ id: number }> => {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -24,7 +24,7 @@ export const CoordinadorDashboard = () => {
   const [filtroPeriodo, setFiltroPeriodo] = useState("2024-2025")
 
   // Usar hooks de coordinador
-  const { alumnos, cargando: cargandoAlumnos } = useAlumnosByCarrera(
+  const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(
     usuario?.carrera_id || null
   )
   const { materias, cargando: cargandoMaterias } = useMateriasByCarrera(
@@ -127,8 +127,18 @@ export const CoordinadorDashboard = () => {
           <div className={styles.seccion}>
             <h1>Gestión de Alumnos</h1>
             <p>Visualiza y gestiona todos los alumnos inscritos en la carrera de <strong>{usuario?.carrera_nombre}</strong>.</p>
-            <UsuariosList />
-            {/* TODO: Filtrar solo alumnos de la carrera del coordinador */}
+            
+            {cargandoAlumnos ? (
+              <p>Cargando alumnos...</p>
+            ) : alumnos.length > 0 ? (
+              <UsuariosList 
+                carreraId={usuario?.carrera_id} 
+                alumnosFiltrados={alumnos}
+                onAlumnoCreated={refetchAlumnos}
+              />
+            ) : (
+              <p>No hay alumnos registrados en esta carrera.</p>
+            )}
           </div>
         )}
 

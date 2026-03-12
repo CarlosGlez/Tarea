@@ -61,8 +61,8 @@ router.get('/alumnos', (req, res) => {
     SELECT u.*, a.matricula, a.plan_id, a.estatus_academico, a.generacion, a.escuela_procedencia
     FROM usuarios u
     JOIN alumnos a ON u.id = a.id_alumno
-    JOIN planes_estudio p ON a.plan_id = p.id
-    WHERE p.carrera_id = ? AND u.rol = 'alumno'
+    JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
+    WHERE ac.carrera_id = ? AND ac.activo = 1 AND u.rol = 'alumno'
     ORDER BY a.matricula
   `
   
@@ -149,8 +149,8 @@ router.get('/estadisticas', (req, res) => {
   const query = `
     SELECT 
       (SELECT COUNT(DISTINCT a.id_alumno) FROM alumnos a
-       JOIN planes_estudio p ON a.plan_id = p.id
-       WHERE p.carrera_id = ? AND a.estatus_academico = 'inscrito') as totalAlumnos,
+       JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
+       WHERE ac.carrera_id = ? AND ac.activo = 1 AND a.estatus_academico = 'inscrito') as totalAlumnos,
       (SELECT COUNT(*) FROM materias m
        JOIN plan_materias pm ON m.id = pm.materia_id
        JOIN planes_estudio p ON pm.plan_id = p.id
@@ -198,9 +198,9 @@ router.get('/reportes/inscripciones', (req, res) => {
       a.fecha_creacion
     FROM alumnos a
     JOIN usuarios u ON a.id_alumno = u.id
-    JOIN planes_estudio p ON a.plan_id = p.id
-    LEFT JOIN plan_materias pm ON p.id = pm.plan_id
-    WHERE p.carrera_id = ? AND a.estatus_academico = 'inscrito'
+    JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
+    LEFT JOIN plan_materias pm ON a.plan_id = pm.plan_id
+    WHERE ac.carrera_id = ? AND ac.activo = 1 AND a.estatus_academico = 'inscrito'
   `
   
   const params = [carrera_id]
@@ -239,9 +239,9 @@ router.get('/reportes/rendimiento', (req, res) => {
       a.estatus_academico
     FROM alumnos a
     JOIN usuarios u ON a.id_alumno = u.id
-    JOIN planes_estudio p ON a.plan_id = p.id
+    JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
     LEFT JOIN historial_academico h ON a.id_alumno = h.alumno_id
-    WHERE p.carrera_id = ?
+    WHERE ac.carrera_id = ? AND ac.activo = 1
   `
   
   const params = [carrera_id]
@@ -276,8 +276,8 @@ router.get('/reportes/desercion', (req, res) => {
       COUNT(CASE WHEN YEAR(NOW()) - YEAR(a.fecha_creacion) <= 1 THEN 1 END) as desertores_recientes,
       COUNT(CASE WHEN a.generacion IS NOT NULL THEN 1 END) as desertores_por_generacion
     FROM alumnos a
-    JOIN planes_estudio p ON a.plan_id = p.id
-    WHERE p.carrera_id = ? AND a.estatus_academico = 'baja'
+    JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
+    WHERE ac.carrera_id = ? AND ac.activo = 1 AND a.estatus_academico = 'baja'
   `
   
   db.query(query, [carrera_id], (err, results) => {

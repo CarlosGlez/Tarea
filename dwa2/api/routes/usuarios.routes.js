@@ -12,14 +12,83 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-  const { nombre_usuario, nombre, apellido, correo, contrasena, rol } = req.body
+  const { nombre_usuario, nombre, apellido, correo, contrasena, rol, carrera_id, plan_id } = req.body
+  console.log('POST /usuarios - Datos recibidos:', { nombre_usuario, rol, carrera_id, plan_id })
   const hashedPassword = await bcrypt.hash(contrasena, 10)
+  
   db.query(
     'INSERT INTO usuarios (nombre_usuario, nombre, apellido, correo, contrasena, rol) VALUES (?, ?, ?, ?, ?, ?)',
     [nombre_usuario, nombre || '', apellido || '', correo, hashedPassword, rol],
     (err, result) => {
-      if (err) return res.status(500).json(err)
-      res.json({ id: result.insertId })
+      if (err) {
+        console.error('Error creando usuario:', err)
+        return res.status(500).json(err)
+      }
+      
+      const userId = result.insertId
+      console.log('Usuario creado exitosamente con ID:', userId)
+      
+      // Si es alumno, crear registro en alumnos y asignar a carrera
+      if (rol === 'alumno' && carrera_id && plan_id) {
+        console.log('Creando alumno con carrera_id:', carrera_id, 'plan_id:', plan_id)
+        // Crear registro en tabla alumnos
+        db.query(
+          'INSERT INTO alumnos (id_alumno, matricula, plan_id, estatus_academico) VALUES (?, ?, ?, ?)',
+          [userId, `${Date.now()}`, plan_id, 'inscrito'],
+          (err) => {
+            if (err) {
+              console.error('Error creating alumno record:', err)
+              return res.status(500).json(err)
+            }
+            console.log('Registro en alumnos creado exitosamente')
+            
+            // Asignar a carrera
+            console.log('Asignando a carrera - alumno_id:', userId, 'carrera_id:', carrera_id)
+            db.query(
+              'INSERT INTO alumno_carrera (alumno_id, carrera_id, activo) VALUES (?, ?, ?)',
+              [userId, carrera_id, 1],
+              (err) => {
+                if (err) {
+                  console.error('Error assigning alumno to carrera:', err)
+                  return res.status(500).json(err)
+                }
+                console.log('Alumno asignado a carrera exitosamente')
+                res.json({ id: userId, message: 'Alumno creado y asignado a carrera' })
+              }
+            )
+          }
+        )
+      }
+      // Si es coordinador, crear registro en coordinadores y asignar a carrera
+      else if (rol === 'coordinador' && carrera_id) {
+        // Crear registro en tabla coordinadores
+        db.query(
+          'INSERT INTO coordinadores (id_coordinador) VALUES (?)',
+          [userId],
+          (err) => {
+            if (err) {
+              console.error('Error creating coordinador record:', err)
+              return res.status(500).json(err)
+            }
+            
+            // Asignar a carrera
+            db.query(
+              'INSERT INTO coordinador_carrera (coordinador_id, carrera_id, rol_cargo, activo) VALUES (?, ?, ?, ?)',
+              [userId, carrera_id, 'coordinador', 1],
+              (err) => {
+                if (err) {
+                  console.error('Error assigning coordinador to carrera:', err)
+                  return res.status(500).json(err)
+                }
+                res.json({ id: userId, message: 'Coordinador creado y asignado a carrera' })
+              }
+            )
+          }
+        )
+      }
+      else {
+        res.json({ id: userId })
+      }
     }
   )
 })
