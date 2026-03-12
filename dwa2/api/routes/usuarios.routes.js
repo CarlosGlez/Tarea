@@ -125,10 +125,15 @@ router.get('/:id/alumno-datos', (req, res) => {
   // Consulta básica que funciona con la estructura actual
   db.query(
     `SELECT
-      u.id, u.nombre, u.apellido, u.nombre_usuario, u.correo,
-      a.matricula, a.escuela_procedencia, a.generacion, a.estatus_academico
+      u.id, u.nombre, u.apellido, u.nombre_usuario, u.correo, u.fecha_creacion,
+      a.matricula, a.escuela_procedencia, a.generacion, a.estatus_academico,
+      c.nombre AS carrera_nombre,
+      p.nombre AS plan_estudios
     FROM usuarios u
     LEFT JOIN alumnos a ON u.id = a.id_alumno
+    LEFT JOIN alumno_carrera ac ON u.id = ac.alumno_id AND ac.activo = 1
+    LEFT JOIN carreras c ON ac.carrera_id = c.id
+    LEFT JOIN planes_estudio p ON a.plan_id = p.id
     WHERE u.id = ? AND u.rol = 'alumno'`,
     [id],
     (err, results) => {
@@ -154,9 +159,12 @@ router.get('/:id/alumno-datos', (req, res) => {
               numero_telefono: '',
               numero_identificacion: '',
               fecha_nacimiento: null,
+              fecha_alta: userData.fecha_creacion || null,
               escuela_procedencia: userData.escuela_procedencia || '',
               generacion: userData.generacion || '',
-              estatus_academico: userData.estatus_academico || 'inscrito'
+              estatus_academico: userData.estatus_academico || 'inscrito',
+              carrera_nombre: userData.carrera_nombre || '',
+              plan_estudios: userData.plan_estudios || ''
             })
           }
 
@@ -172,9 +180,12 @@ router.get('/:id/alumno-datos', (req, res) => {
             numero_telefono: additionalData.numero_telefono || '',
             numero_identificacion: additionalData.numero_identificacion || '',
             fecha_nacimiento: additionalData.fecha_nacimiento || null,
+            fecha_alta: userData.fecha_creacion || null,
             escuela_procedencia: userData.escuela_procedencia || '',
             generacion: userData.generacion || '',
-            estatus_academico: userData.estatus_academico || 'inscrito'
+            estatus_academico: userData.estatus_academico || 'inscrito',
+            carrera_nombre: userData.carrera_nombre || '',
+            plan_estudios: userData.plan_estudios || ''
           })
         }
       )
@@ -353,12 +364,21 @@ router.get('/:id/materias', (req, res) => {
         h.periodo
       FROM plan_materias pm
       JOIN materias m ON pm.materia_id = m.id
-      LEFT JOIN historial_academico h ON h.materia_id = m.id AND h.alumno_id = ?
+      LEFT JOIN (
+        SELECT h1.*
+        FROM historial_academico h1
+        INNER JOIN (
+          SELECT alumno_id, materia_id, MAX(id) AS max_id
+          FROM historial_academico
+          WHERE alumno_id = ?
+          GROUP BY alumno_id, materia_id
+        ) h2 ON h1.id = h2.max_id
+      ) h ON h.materia_id = m.id AND h.alumno_id = ?
       WHERE pm.plan_id = ?
       ORDER BY pm.semestre, m.nombre
     `
 
-    db.query(sql, [alumnoId, planId], (err2, results) => {
+    db.query(sql, [alumnoId, alumnoId, planId], (err2, results) => {
       if (err2) return res.status(500).json(err2)
       res.json(results)
     })

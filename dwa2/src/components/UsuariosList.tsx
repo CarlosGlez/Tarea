@@ -11,9 +11,10 @@ interface UsuariosListProps {
   alumnosFiltrados?: Alumno[]
   soloVisualizacion?: boolean
   onAlumnoCreated?: () => void
+  onVerDetalleAlumno?: (alumno: Alumno) => void
 }
 
-export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = false, onAlumnoCreated }: UsuariosListProps) => {
+export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = false, onAlumnoCreated, onVerDetalleAlumno }: UsuariosListProps) => {
   const { usuarios, loading, addUsuario, editUsuario, removeUsuario } = useUsuarios()
   const [carreras, setCarreras] = useState<Carrera[]>([])
   const [planes, setPlanes] = useState<PlanEstudio[]>([])
@@ -563,6 +564,15 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
                 <td>{u.correo}</td>
                 <td>
                   <div className={styles.tableActions}>
+                    {onVerDetalleAlumno && u.rol === 'alumno' && (
+                      <button
+                        className={`${styles.btn} ${styles.secondary} ${styles.btnSmall}`}
+                        onClick={() => onVerDetalleAlumno(u as Alumno)}
+                        title="Ver avance académico"
+                      >
+                        <i className="fas fa-chart-line"></i>
+                      </button>
+                    )}
                     <button
                       className={`${styles.btn} ${styles.primary} ${styles.btnSmall}`}
                       onClick={() => handleEdit(u)}

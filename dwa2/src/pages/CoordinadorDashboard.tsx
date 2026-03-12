@@ -3,6 +3,10 @@ import { Sidebar } from "../components/Sidebar"
 import { UsuariosList } from "../components/UsuariosList"
 import { useAlumnosByCarrera, useMateriasByCarrera, useHorariosByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
 import * as coordinadorService from "../data/coordinadorService"
+import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
+import { getMateriasAlumno } from "../data/materiasService"
+import type { Alumno } from "../types/Carrera"
+import type { Materia } from "../types/Materia"
 import styles from "./CoordinadorDashboard.module.css"
 
 // Interfaz para materialización del coordinador
@@ -16,12 +20,33 @@ interface CoordinadorInfo {
 
 export const CoordinadorDashboard = () => {
   // Estado para guardar datos del usuario
-  const [usuario, setUsuario] = useState<CoordinadorInfo | null>(null)
+  const [usuario] = useState<CoordinadorInfo | null>(() => {
+    const nombre = localStorage.getItem("nombre")
+    const rol = localStorage.getItem("rol")
+    const carreraId = localStorage.getItem("carrera_id")
+    const carreraNombre = localStorage.getItem("carrera_nombre")
+
+    const id = parseInt(localStorage.getItem("userId") || "0")
+    if (!id) return null
+
+    return {
+      id,
+      nombre_usuario: nombre || "",
+      carrera_id: parseInt(carreraId || "0"),
+      carrera_nombre: carreraNombre || "Carrera",
+      rol: rol || "coordinador",
+    }
+  })
   // Estado para controlar qué sección se muestra
   const [seccionActual, setSeccionActual] = useState("inicio")
   // Estados para filtros de reportes
   const [filtroSemestre, setFiltroSemestre] = useState("todos")
   const [filtroPeriodo, setFiltroPeriodo] = useState("2024-2025")
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState<Alumno | null>(null)
+  const [datosAlumnoDetalle, setDatosAlumnoDetalle] = useState<AlumnoDatos | null>(null)
+  const [materiasAlumnoDetalle, setMateriasAlumnoDetalle] = useState<Materia[]>([])
+  const [cargandoDetalleAlumno, setCargandoDetalleAlumno] = useState(false)
+  const [vistaDetalleAlumno, setVistaDetalleAlumno] = useState<"plan" | "kardex">("plan")
 
   // Usar hooks de coordinador
   const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(
@@ -37,22 +62,24 @@ export const CoordinadorDashboard = () => {
     usuario?.carrera_id || null
   )
 
-  // Cargar datos del usuario desde localStorage
   useEffect(() => {
-    const nombre = localStorage.getItem("nombre")
-    const rol = localStorage.getItem("rol")
-    const carreraId = localStorage.getItem("carrera_id")
-    const carreraNombre = localStorage.getItem("carrera_nombre")
-    
-    // Para ahora, asumiendo que el backend devuelve estos datos
-    setUsuario({
-      id: parseInt(localStorage.getItem("userId") || "0"),
-      nombre_usuario: nombre || "",
-      carrera_id: parseInt(carreraId || "0"),
-      carrera_nombre: carreraNombre || "Carrera",
-      rol: rol || "coordinador",
-    })
-  }, [])
+    if (!alumnoSeleccionado) return
+
+    Promise.all([
+      getAlumnoDatos(alumnoSeleccionado.id),
+      getMateriasAlumno(alumnoSeleccionado.id),
+    ])
+      .then(([datos, materias]) => {
+        setDatosAlumnoDetalle(datos)
+        setMateriasAlumnoDetalle(materias)
+      })
+      .catch((err) => {
+        console.error("Error cargando detalle del alumno:", err)
+        setDatosAlumnoDetalle(null)
+        setMateriasAlumnoDetalle([])
+      })
+      .finally(() => setCargandoDetalleAlumno(false))
+  }, [alumnoSeleccionado])
 
   // Función para logout
   const handleLogout = () => {
@@ -64,6 +91,34 @@ export const CoordinadorDashboard = () => {
     localStorage.removeItem("carrera_nombre")
     window.location.hash = ""
   }
+
+  const abrirDetalleAlumno = (alumno: Alumno) => {
+    setCargandoDetalleAlumno(true)
+    setAlumnoSeleccionado(alumno)
+    setVistaDetalleAlumno("plan")
+    setSeccionActual("alumno_detalle")
+  }
+
+  const volverAAlumnos = () => {
+    setSeccionActual("alumnos")
+  }
+
+  const totalCreditosPlan = materiasAlumnoDetalle.reduce((acc, materia) => acc + materia.creditos, 0)
+  const creditosAprobados = materiasAlumnoDetalle
+    .filter((materia) => materia.estatus === "aprobada" || materia.estatus === "revalidar")
+    .reduce((acc, materia) => acc + materia.creditos, 0)
+  const porcentajeAvance = totalCreditosPlan > 0 ? Math.round((creditosAprobados / totalCreditosPlan) * 100) : 0
+
+  const materiasPorSemestre = materiasAlumnoDetalle.reduce<Record<number, Materia[]>>((acc, materia) => {
+    const semestre = materia.semestre || 0
+    if (!acc[semestre]) acc[semestre] = []
+    acc[semestre].push(materia)
+    return acc
+  }, {})
+
+  const materiasCursadas = materiasAlumnoDetalle.filter((materia) => materia.estatus === "aprobada" || materia.estatus === "revalidar")
+  const materiasPorCursar = materiasAlumnoDetalle.filter((materia) => materia.estatus === "no_cursada")
+  const materiasReprobadas = materiasAlumnoDetalle.filter((materia) => materia.estatus === "no_aprobada")
 
   // Elementos del menú de la sidebar
   const menuItems = [
@@ -135,9 +190,124 @@ export const CoordinadorDashboard = () => {
                 carreraId={usuario?.carrera_id} 
                 alumnosFiltrados={alumnos}
                 onAlumnoCreated={refetchAlumnos}
+                onVerDetalleAlumno={abrirDetalleAlumno}
               />
             ) : (
               <p>No hay alumnos registrados en esta carrera.</p>
+            )}
+          </div>
+        )}
+
+        {seccionActual === "alumno_detalle" && (
+          <div className={styles.seccion}>
+            <button className={`${styles.boton} ${styles.secundario}`} onClick={volverAAlumnos}>
+              Regresar a alumnos
+            </button>
+
+            <h1 style={{ marginTop: "18px" }}>Avance del alumno</h1>
+
+            {cargandoDetalleAlumno ? (
+              <p>Cargando detalle del alumno...</p>
+            ) : datosAlumnoDetalle ? (
+              <>
+                <div className={styles.alumnoResumenCard}>
+                  <h2>{`${datosAlumnoDetalle.nombre || ""} ${datosAlumnoDetalle.apellido || ""}`.trim() || datosAlumnoDetalle.nombre_usuario}</h2>
+                  <p><strong>ID:</strong> {datosAlumnoDetalle.id}</p>
+                  <p><strong>Carrera:</strong> {datosAlumnoDetalle.carrera_nombre || "No especificada"}</p>
+                  <p><strong>Plan:</strong> {datosAlumnoDetalle.plan_estudios || "No especificado"}</p>
+                  <p><strong>Creditos cursados:</strong> {creditosAprobados} / {totalCreditosPlan}</p>
+
+                  <div className={styles.progresoTrack}>
+                    <div className={styles.progresoFill} style={{ width: `${porcentajeAvance}%` }} />
+                  </div>
+                  <p className={styles.progresoTexto}>{porcentajeAvance}% de avance</p>
+
+                  <div className={styles.botonesDetalle}>
+                    <button
+                      className={styles.boton}
+                      onClick={() => setVistaDetalleAlumno("plan")}
+                    >
+                      Ver plan de estudio
+                    </button>
+                    <button
+                      className={styles.boton}
+                      onClick={() => setVistaDetalleAlumno("kardex")}
+                    >
+                      Ver kardex
+                    </button>
+                  </div>
+                </div>
+
+                {vistaDetalleAlumno === "plan" && (
+                  <div className={styles.detalleBloque}>
+                    <h2>Plan de estudio y avance</h2>
+                    {Object.keys(materiasPorSemestre).length === 0 ? (
+                      <p>No hay materias del plan para mostrar.</p>
+                    ) : (
+                      Object.keys(materiasPorSemestre)
+                        .map(Number)
+                        .sort((a, b) => a - b)
+                        .map((semestre) => (
+                          <div key={semestre} className={styles.semestreBloque}>
+                            <h3>Semestre {semestre}</h3>
+                            <div className={styles.listaMateriasPlan}>
+                              {materiasPorSemestre[semestre].map((materia) => (
+                                <article key={materia.id} className={styles.materiaPlanCard}>
+                                  <p className={styles.materiaCodigo}>{materia.codigo}</p>
+                                  <p className={styles.materiaNombre}>{materia.nombre}</p>
+                                  <p className={styles.materiaMeta}>{materia.creditos} creditos</p>
+                                  <span className={styles[`estatus_${materia.estatus}`] || styles.estatus_default}>
+                                    {materia.estatus}
+                                  </span>
+                                </article>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                )}
+
+                {vistaDetalleAlumno === "kardex" && (
+                  <div className={styles.detalleBloque}>
+                    <h2>Kardex academico</h2>
+
+                    <div className={styles.kardexGrid}>
+                      <section className={styles.kardexColumna}>
+                        <h3>Cursadas</h3>
+                        {materiasCursadas.length === 0 ? <p>Sin materias cursadas.</p> : materiasCursadas.map((m) => (
+                          <div key={m.id} className={styles.kardexItem}>
+                            <strong>{m.codigo}</strong> - {m.nombre}
+                            <span> ({m.creditos} cr){typeof m.calificacion === "number" ? ` - ${m.calificacion}` : ""}</span>
+                          </div>
+                        ))}
+                      </section>
+
+                      <section className={styles.kardexColumna}>
+                        <h3>Por cursar</h3>
+                        {materiasPorCursar.length === 0 ? <p>Sin materias pendientes.</p> : materiasPorCursar.map((m) => (
+                          <div key={m.id} className={styles.kardexItem}>
+                            <strong>{m.codigo}</strong> - {m.nombre}
+                            <span> ({m.creditos} cr)</span>
+                          </div>
+                        ))}
+                      </section>
+
+                      <section className={styles.kardexColumna}>
+                        <h3>Reprobadas</h3>
+                        {materiasReprobadas.length === 0 ? <p>Sin materias reprobadas.</p> : materiasReprobadas.map((m) => (
+                          <div key={m.id} className={styles.kardexItem}>
+                            <strong>{m.codigo}</strong> - {m.nombre}
+                            <span> ({m.creditos} cr){typeof m.calificacion === "number" ? ` - ${m.calificacion}` : ""}</span>
+                          </div>
+                        ))}
+                      </section>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p>No fue posible cargar el detalle del alumno.</p>
             )}
           </div>
         )}

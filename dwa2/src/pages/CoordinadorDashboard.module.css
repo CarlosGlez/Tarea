@@ -178,3 +178,164 @@
   color: #f44336;
   font-weight: 600;
 }
+
+.alumnoResumenCard {
+  margin-top: 18px;
+  background: #fff8f3;
+  border: 1px solid #ffd8c2;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.alumnoResumenCard h2 {
+  margin: 0 0 12px;
+  color: #1f2937;
+  font-size: 24px;
+}
+
+.alumnoResumenCard p {
+  margin: 8px 0;
+  color: #374151;
+}
+
+.progresoTrack {
+  width: 100%;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progresoFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff5800 0%, #ffa05f 100%);
+}
+
+.progresoTexto {
+  margin-top: 8px;
+  font-weight: 600;
+  color: #b94900;
+}
+
+.botonesDetalle {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detalleBloque {
+  margin-top: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.detalleBloque h2 {
+  color: #ff5800;
+  margin-bottom: 12px;
+}
+
+.semestreBloque {
+  margin-top: 16px;
+}
+
+.semestreBloque h3 {
+  margin: 0 0 10px;
+  color: #1f2937;
+}
+
+.listaMateriasPlan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.materiaPlanCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f9fafb;
+}
+
+.materiaCodigo {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
+}
+
+.materiaNombre {
+  margin: 6px 0;
+  color: #1f2937;
+}
+
+.materiaMeta {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.estatus_default,
+.estatus_aprobada,
+.estatus_revalidar,
+.estatus_no_cursada,
+.estatus_no_aprobada,
+.estatus_cursando {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.estatus_aprobada,
+.estatus_revalidar {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.estatus_no_cursada {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.estatus_no_aprobada {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.estatus_cursando {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.estatus_default {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.kardexGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.kardexColumna {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.kardexColumna h3 {
+  margin: 0 0 10px;
+  color: #1f2937;
+}
+
+.kardexItem {
+  margin-bottom: 8px;
+  color: #374151;
+}

@@ -5,12 +5,16 @@ const API_URL = "http://localhost:3000/api/usuarios"
 // interfaz para los datos extendidos que devuelve el endpoint alumno-datos
 export interface AlumnoDatos extends Usuario {
   matricula?: string
+  imagen_url?: string
   numero_telefono?: string
   numero_identificacion?: string
   fecha_nacimiento?: string | null
+  fecha_alta?: string | null
   escuela_procedencia?: string
   generacion?: string
   estatus_academico?: string
+  carrera_nombre?: string
+  plan_estudios?: string
 }
 
 export const getUsuarios = async (): Promise<Usuario[]> => {

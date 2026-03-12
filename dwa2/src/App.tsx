@@ -7,6 +7,7 @@ import { CoordinadorDashboard } from "./pages/CoordinadorDashboard"
 import { AdminDashboard } from "./pages/AdminDashboard"
 import './App.css'
 
+
 // Componente App que maneja el routing basado en hash
 function App() {
   // Estado para controlar qué página mostrar
