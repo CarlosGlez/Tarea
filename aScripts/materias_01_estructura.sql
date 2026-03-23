@@ -30,6 +30,46 @@ CREATE TABLE IF NOT EXISTS plan_materias (
     FOREIGN KEY (materia_id) REFERENCES materias(id)
 );
 
+CREATE TABLE IF NOT EXISTS carrera_materias (
+    carrera_id INT NOT NULL,
+    materia_id INT NOT NULL,
+    semestre_sugerido INT DEFAULT NULL,
+    obligatoria_en_plan TINYINT(1) NOT NULL DEFAULT 0,
+    disponible TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (carrera_id, materia_id),
+    INDEX idx_carrera_materias_semestre (carrera_id, semestre_sugerido),
+    FOREIGN KEY (carrera_id) REFERENCES carreras(id),
+    FOREIGN KEY (materia_id) REFERENCES materias(id)
+);
+
+CREATE TABLE IF NOT EXISTS minors (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    clave VARCHAR(30) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    UNIQUE KEY uk_minors_clave (clave),
+    UNIQUE KEY uk_minors_nombre (nombre)
+);
+
+CREATE TABLE IF NOT EXISTS carrera_minors (
+    carrera_id INT NOT NULL,
+    minor_id INT NOT NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (carrera_id, minor_id),
+    FOREIGN KEY (carrera_id) REFERENCES carreras(id),
+    FOREIGN KEY (minor_id) REFERENCES minors(id)
+);
+
+CREATE TABLE IF NOT EXISTS minor_materias (
+    minor_id INT NOT NULL,
+    materia_id INT NOT NULL,
+    semestre_sugerido INT DEFAULT NULL,
+    PRIMARY KEY (minor_id, materia_id),
+    INDEX idx_minor_materias_semestre (minor_id, semestre_sugerido),
+    FOREIGN KEY (minor_id) REFERENCES minors(id),
+    FOREIGN KEY (materia_id) REFERENCES materias(id)
+);
+
 CREATE TABLE IF NOT EXISTS prerrequisitos (
     materia_id INT NOT NULL,
     materia_requisito_id INT NOT NULL,

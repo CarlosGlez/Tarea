@@ -1,13 +1,5 @@
 import type { Alumno } from "../types/Carrera"
-
-interface Materia {
-  id: number
-  nombre: string
-  codigo: string
-  creditos: number
-  semestre: number
-  estatus: boolean
-}
+import type { MateriaCarrera } from "../types/MateriaCarrera"
 
 interface Horario {
   id: number
@@ -28,6 +20,38 @@ interface Estadisticas {
   alumnosActivos: number
 }
 
+interface ReporteInscripcionItem {
+  matricula: string
+  nombre_usuario: string
+  correo: string
+  generacion: string | null
+  materias_inscritas: number
+  fecha_creacion: string
+}
+
+interface ReporteRendimientoItem {
+  nombre_usuario: string
+  matricula: string
+  materias_cursadas: number
+  materias_aprobadas: number
+  promedio: number | null
+  estatus_academico: string
+}
+
+interface ReporteDesercion {
+  total_desertores: number
+  desertores_recientes: number
+  desertores_por_generacion: number
+}
+
+interface ReporteAprobacionItem {
+  codigo: string
+  nombre: string
+  estudiantes_totales: number
+  estudiantes_aprobados: number
+  tasa_aprobacion: number | null
+}
+
 const API_URL = "http://localhost:3000/api"
 
 // Obtener alumnos de la carrera del coordinador
@@ -43,7 +67,7 @@ export const getAlumnosByCarrera = async (carreraId: number): Promise<Alumno[]> 
 }
 
 // Obtener materias de la carrera del coordinador
-export const getMateriasByCarrera = async (carreraId: number): Promise<Materia[]> => {
+export const getMateriasByCarrera = async (carreraId: number): Promise<MateriaCarrera[]> => {
   try {
     const response = await fetch(`${API_URL}/coordinador/materias?carrera_id=${carreraId}`)
     if (!response.ok) throw new Error("Error fetching materias")
@@ -88,7 +112,7 @@ export const getReporteInscripciones = async (
   carreraId: number,
   semestre?: string,
   periodo?: string
-): Promise<any> => {
+): Promise<ReporteInscripcionItem[] | null> => {
   try {
     const params = new URLSearchParams({
       carrera_id: carreraId.toString(),
@@ -109,7 +133,7 @@ export const getReporteRendimiento = async (
   carreraId: number,
   semestre?: string,
   periodo?: string
-): Promise<any> => {
+): Promise<ReporteRendimientoItem[] | null> => {
   try {
     const params = new URLSearchParams({
       carrera_id: carreraId.toString(),
@@ -130,7 +154,7 @@ export const getReporteDesercion = async (
   carreraId: number,
   semestre?: string,
   periodo?: string
-): Promise<any> => {
+): Promise<ReporteDesercion | null> => {
   try {
     const params = new URLSearchParams({
       carrera_id: carreraId.toString(),
@@ -151,7 +175,7 @@ export const getReporteAprobacion = async (
   carreraId: number,
   semestre?: string,
   periodo?: string
-): Promise<any> => {
+): Promise<ReporteAprobacionItem[] | null> => {
   try {
     const params = new URLSearchParams({
       carrera_id: carreraId.toString(),

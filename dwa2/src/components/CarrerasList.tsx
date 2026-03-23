@@ -7,13 +7,13 @@ export const CarrerasList = () => {
   const { carreras, loading, error } = useCarreras()
   const [selectedCarrera, setSelectedCarrera] = useState<Carrera | null>(null)
 
-  if (loading) return <p>Cargando carreras...</p>
-  if (error) return <p>{error}</p>
-  if (carreras.length === 0) return <p>No hay carreras disponibles.</p>
+  if (loading) return <p className={styles.statusMessage}>Cargando carreras...</p>
+  if (error) return <p className={styles.statusMessage}>{error}</p>
+  if (carreras.length === 0) return <p className={styles.statusMessage}>No hay carreras disponibles.</p>
 
   return (
     <div className={styles.container}>
-      <h2>Carreras</h2>
+      <h2 className={styles.title}>Carreras</h2>
       <ul className={styles.carrerasList}>
         {carreras.map((carrera) => (
           <li key={carrera.id} className={styles.carreraItem}>
@@ -39,14 +39,14 @@ export const CarrerasList = () => {
 const PlanesList = ({ carreraId }: { carreraId: number }) => {
   const { planes, loading, error } = usePlanesByCarrera(carreraId)
 
-  if (loading) return <p>Cargando planes...</p>
-  if (error) return <p>{error}</p>
+  if (loading) return <p className={styles.statusMessage}>Cargando planes...</p>
+  if (error) return <p className={styles.statusMessage}>{error}</p>
 
   return (
     <div className={styles.section}>
       <h3>Planes de Estudio</h3>
       {planes.length === 0 ? (
-        <p>No hay planes para esta carrera.</p>
+        <p className={styles.statusMessage}>No hay planes para esta carrera.</p>
       ) : (
         <ul className={styles.planesList}>
           {planes.map((plan) => (
@@ -66,14 +66,14 @@ const PlanesList = ({ carreraId }: { carreraId: number }) => {
 const AlumnosList = ({ carreraId }: { carreraId: number }) => {
   const { alumnos, loading, error } = useAlumnosByCarrera(carreraId)
 
-  if (loading) return <p>Cargando alumnos...</p>
-  if (error) return <p>{error}</p>
+  if (loading) return <p className={styles.statusMessage}>Cargando alumnos...</p>
+  if (error) return <p className={styles.statusMessage}>{error}</p>
 
   return (
     <div className={styles.section}>
       <h3>Alumnos ({alumnos.length})</h3>
       {alumnos.length === 0 ? (
-        <p>No hay alumnos en esta carrera.</p>
+        <p className={styles.statusMessage}>No hay alumnos en esta carrera.</p>
       ) : (
         <table className={styles.table}>
           <thead>

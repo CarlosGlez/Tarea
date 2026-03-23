@@ -1,0 +1,113 @@
+
+.loginWrapper {
+  width: 100%;
+  min-height: 100vh; /* Ocupa todo el alto de la pantalla */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+  
+  /* Aquí está la magia del fondo con imagen y degradado naranja. */
+  background: linear-gradient(
+    rgba(255, 88, 0, 0.75), 
+    rgba(255, 88, 0, 0.95)
+  ), url('../assets/login-img.jpg'); /* Asegúrate de que esta ruta sea correcta */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px; /* Tarjeta más estrecha, como en tu maqueta ideal */
+  /* Recuadro naranja sólido */
+  background-color: #ff5800;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  align-items: stretch;
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.logo {
+  max-width: 180px;
+  height: auto;
+  margin: 0 auto 16px auto;
+  display: block;
+}
+
+.title {
+  margin: 0;
+  color: #ffffff; /* Letras blancas */
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+  font-weight: bold;
+}
+
+.subtitle {
+  margin: 4px 0 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #ffffff;
+  color: #333333;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.input::placeholder {
+  color: #888888;
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.button {
+  width: 100%;
+  padding: 12px 14px;
+  margin-top: 8px;
+  border-radius: 6px;
+  border: 2px solid #ffffff;
+  background-color: transparent;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.button:hover:not(:disabled) {
+  background-color: #ffffff;
+  color: #ff5800;
+}
+
+.button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 420px) {
+  .card { padding: 24px; border-radius: 10px; }
+  .title { font-size: 1.2rem; }
+  .logo { max-width: 150px; }
+}

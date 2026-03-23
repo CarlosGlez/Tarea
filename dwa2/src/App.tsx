@@ -5,6 +5,7 @@ import { LoginForm } from "./components/LoginForm"
 import { AlumnoDashboard } from "./pages/AlumnoDashboard"
 import { CoordinadorDashboard } from "./pages/CoordinadorDashboard"
 import { AdminDashboard } from "./pages/AdminDashboard"
+import { ThemeProvider } from "./contexts/ThemeContext"
 import './App.css'
 
 
@@ -53,16 +54,18 @@ function App() {
   }, [])
 
   // Mostrar loading mientras se verifica autenticación
-  if (loading) return <div>Cargando...</div>
+  if (loading) return <div className="appLoading">Cargando...</div>
 
   // Renderizar página correspondiente
   return (
-    <div>
-      {currentPage === "login" && <LoginForm />}
-      {currentPage === "alumno" && <AlumnoDashboard />}
-      {currentPage === "coordinador" && <CoordinadorDashboard />}
-      {currentPage === "admin" && <AdminDashboard />}
-    </div>
+    <ThemeProvider>
+      <div>
+        {currentPage === "login" && <LoginForm />}
+        {currentPage === "alumno" && <AlumnoDashboard />}
+        {currentPage === "coordinador" && <CoordinadorDashboard />}
+        {currentPage === "admin" && <AdminDashboard />}
+      </div>
+    </ThemeProvider>
   )
 }
 

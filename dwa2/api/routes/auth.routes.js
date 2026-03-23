@@ -26,8 +26,8 @@ router.post('/login', async (req, res) => {
 
   // Consultar usuario en la base de datos
   db.query(
-    'SELECT * FROM usuarios WHERE nombre_usuario = ?',
-    [nombre_usuario],
+    'SELECT * FROM usuarios WHERE nombre_usuario = ? OR correo = ? LIMIT 1',
+    [nombre_usuario, nombre_usuario],
     async (err, results) => {
       // Manejar errores de consulta
       if (err) {
@@ -109,6 +109,61 @@ router.post('/login', async (req, res) => {
       }
     }
   )
+})
+
+// Ruta POST para registro de alumnos
+router.post('/register', async (req, res) => {
+  const { nombre_completo, correo, password, escuela_procedencia } = req.body
+
+  if (!nombre_completo || !correo || !password) {
+    return res.status(400).json({ message: 'Faltan campos obligatorios' })
+  }
+
+  try {
+    // Separar nombre completo en nombre y apellido para mantener compatibilidad con el esquema actual.
+    const fullName = String(nombre_completo).trim()
+    const nameParts = fullName.split(/\s+/)
+    const nombre = nameParts.shift() || ''
+    const apellido = nameParts.join(' ')
+
+    db.query(
+      'SELECT id FROM usuarios WHERE correo = ? OR nombre_usuario = ?',
+      [correo, correo],
+      async (existsErr, existsResults) => {
+        if (existsErr) {
+          console.error('Error verificando usuario existente:', existsErr)
+          return res.status(500).json({ message: 'Error al verificar usuario existente' })
+        }
+
+        if (existsResults.length > 0) {
+          return res.status(409).json({ message: 'El correo ya está registrado' })
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        db.query(
+          'INSERT INTO usuarios (nombre_usuario, nombre, apellido, correo, contrasena, rol) VALUES (?, ?, ?, ?, ?, ?)',
+          [correo, nombre, apellido, correo, hashedPassword, 'alumno'],
+          (insertErr, insertResult) => {
+            if (insertErr) {
+              console.error('Error creando usuario en registro:', insertErr)
+              return res.status(500).json({ message: 'No se pudo crear el usuario en la tabla usuarios' })
+            }
+
+            const userId = insertResult.insertId
+
+            return res.status(201).json({
+              message: 'Cuenta creada. Un coordinador debe asignar carrera y plan de estudio antes de completar tu perfil académico.',
+              id: userId
+            })
+          }
+        )
+      }
+    )
+  } catch (error) {
+    console.error('Error en registro:', error)
+    res.status(500).json({ message: 'No se pudo registrar la cuenta' })
+  }
 })
 
 // Exportar router para usar en server.js

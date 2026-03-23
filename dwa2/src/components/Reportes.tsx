@@ -1,8 +1,9 @@
 import { useState } from "react"
+import styles from "./Reportes.module.css"
 
 export interface ReporteItem {
   id: number
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface ReportesProps {
@@ -30,25 +31,20 @@ export const Reportes = ({
   const itemsPorPagina = 10
   const totalPaginas = Math.ceil(datos.length / itemsPorPagina)
 
-  const renderValor = (valor: any, tipo: string = "texto") => {
+  const renderValor = (valor: unknown, tipo: string = "texto") => {
     switch (tipo) {
       case "porcentaje":
-        return `${valor}%`
+        return `${String(valor ?? "-")}%`
       case "numero":
-        return valor.toLocaleString()
+        return typeof valor === "number" ? valor.toLocaleString() : String(valor ?? "-")
       case "estado":
         return (
-          <span
-            style={{
-              color: valor === "Activo" || valor === "Aprobado" ? "#4caf50" : "#f44336",
-              fontWeight: "600",
-            }}
-          >
-            {valor}
+          <span className={valor === "Activo" || valor === "Aprobado" ? styles.estadoOk : styles.estadoBad}>
+            {String(valor ?? "-")}
           </span>
         )
       default:
-        return valor
+        return String(valor ?? "-")
     }
   }
 
@@ -57,51 +53,30 @@ export const Reportes = ({
   const datosPaginados = datos.slice(startIndex, endIndex)
 
   if (cargando) {
-    return <div style={{ padding: "20px", textAlign: "center" }}>Cargando {titulo.toLowerCase()}...</div>
+    return <div className={styles.statusBox}>Cargando {titulo.toLowerCase()}...</div>
   }
 
   if (error) {
-    return <div style={{ padding: "20px", color: "#f44336" }}>Error: {error}</div>
+    return <div className={`${styles.statusBox} ${styles.statusBoxError}`}>Error: {error}</div>
   }
 
   if (datos.length === 0) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+      <div className={styles.statusBox}>
         No hay datos disponibles para {titulo.toLowerCase()}
       </div>
     )
   }
 
   return (
-    <div>
-      <h2>{titulo}</h2>
+    <div className={styles.wrapper}>
+      <h2 className={styles.title}>{titulo}</h2>
 
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          marginTop: "20px",
-          fontSize: "14px",
-        }}
-      >
-        <thead
-          style={{
-            backgroundColor: "#f9f9f9",
-            borderBottom: "2px solid #ff5800",
-          }}
-        >
+      <table className={styles.table}>
+        <thead className={styles.tableHead}>
           <tr>
             {columnas.map((col) => (
-              <th
-                key={col.clave}
-                style={{
-                  padding: "15px",
-                  textAlign: "left",
-                  color: "#ff5800",
-                  fontWeight: "600",
-                  textTransform: "uppercase",
-                }}
-              >
+              <th key={col.clave} className={styles.tableHeaderCell}>
                 {col.etiqueta}
               </th>
             ))}
@@ -109,21 +84,9 @@ export const Reportes = ({
         </thead>
         <tbody>
           {datosPaginados.map((item, index) => (
-            <tr
-              key={item.id || index}
-              style={{
-                borderBottom: "1px solid #e0e0e0",
-                "&:hover": { backgroundColor: "#f9f9f9" },
-              }}
-            >
+            <tr key={item.id || index} className={styles.tableRow}>
               {columnas.map((col) => (
-                <td
-                  key={col.clave}
-                  style={{
-                    padding: "15px",
-                    color: "#666",
-                  }}
-                >
+                <td key={col.clave} className={styles.tableCell}>
                   {renderValor(item[col.clave], col.tipo)}
                 </td>
               ))}
@@ -133,22 +96,11 @@ export const Reportes = ({
       </table>
 
       {paginacion && totalPaginas > 1 && (
-        <div
-          style={{
-            marginTop: "20px",
-            display: "flex",
-            justifyContent: "center",
-            gap: "5px",
-          }}
-        >
+        <div className={styles.pagination}>
           <button
             onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
             disabled={paginaActual === 1}
-            style={{
-              padding: "8px 12px",
-              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
-              opacity: paginaActual === 1 ? 0.5 : 1,
-            }}
+            className={styles.pageButton}
           >
             Anterior
           </button>
@@ -160,14 +112,7 @@ export const Reportes = ({
               <button
                 key={pageNum}
                 onClick={() => setPaginaActual(pageNum)}
-                style={{
-                  padding: "8px 12px",
-                  backgroundColor: pageNum === paginaActual ? "#ff5800" : "#e0e0e0",
-                  color: pageNum === paginaActual ? "white" : "#333",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
+                className={`${styles.pageButton} ${pageNum === paginaActual ? styles.pageButtonActive : ""}`}
               >
                 {pageNum}
               </button>
@@ -177,25 +122,14 @@ export const Reportes = ({
           <button
             onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
             disabled={paginaActual === totalPaginas}
-            style={{
-              padding: "8px 12px",
-              cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer",
-              opacity: paginaActual === totalPaginas ? 0.5 : 1,
-            }}
+            className={styles.pageButton}
           >
             Siguiente
           </button>
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: "15px",
-          fontSize: "12px",
-          color: "#999",
-          textAlign: "right",
-        }}
-      >
+      <div className={styles.footerNote}>
         Mostrando {startIndex + 1} a {Math.min(endIndex, datos.length)} de {datos.length}{" "}
         registros
       </div>

@@ -1,7 +1,7 @@
 
 // Hook personalizado para manejar autenticación
 import { useState } from "react"
-import { loginRequest } from "../data/authService"
+import { loginRequest, registerRequest } from "../data/authService"
 
 export const useAuth = () => {
 
@@ -41,6 +41,21 @@ export const useAuth = () => {
     }
   }
 
+  const register = async (nombre_completo: string, correo: string, password: string, escuela_procedencia: string) => {
+    setLoading(true)
+
+    try {
+      return await registerRequest({
+        nombre_completo,
+        correo,
+        password,
+        escuela_procedencia
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Retornar funciones y estado del hook
-  return { login, loading }
+  return { login, register, loading }
 }

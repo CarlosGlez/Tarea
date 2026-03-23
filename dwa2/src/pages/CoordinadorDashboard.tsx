@@ -172,7 +172,7 @@ export const CoordinadorDashboard = () => {
               </div>
             )}
 
-            <h2 style={{ marginTop: "40px" }}>Acciones Rápidas</h2>
+            <h2 className={styles.tituloConEspacio}>Acciones Rapidas</h2>
             <p>Utiliza el menú lateral para acceder a las diferentes funcionalidades de coordinador académico.</p>
           </div>
         )}
@@ -184,7 +184,11 @@ export const CoordinadorDashboard = () => {
             <p>Visualiza y gestiona todos los alumnos inscritos en la carrera de <strong>{usuario?.carrera_nombre}</strong>.</p>
             
             {cargandoAlumnos ? (
-              <p>Cargando alumnos...</p>
+              <div className={styles.skeletonRows}>
+                <div className={styles.skeletonRow} />
+                <div className={styles.skeletonRow} />
+                <div className={styles.skeletonRow} />
+              </div>
             ) : alumnos.length > 0 ? (
               <UsuariosList 
                 carreraId={usuario?.carrera_id} 
@@ -193,7 +197,7 @@ export const CoordinadorDashboard = () => {
                 onVerDetalleAlumno={abrirDetalleAlumno}
               />
             ) : (
-              <p>No hay alumnos registrados en esta carrera.</p>
+              <p className={styles.emptyState}>No hay alumnos registrados en esta carrera.</p>
             )}
           </div>
         )}
@@ -204,10 +208,13 @@ export const CoordinadorDashboard = () => {
               Regresar a alumnos
             </button>
 
-            <h1 style={{ marginTop: "18px" }}>Avance del alumno</h1>
+            <h1 className={styles.tituloConEspacio}>Avance del alumno</h1>
 
             {cargandoDetalleAlumno ? (
-              <p>Cargando detalle del alumno...</p>
+              <div className={styles.skeletonRows}>
+                <div className={styles.skeletonRow} />
+                <div className={styles.skeletonRow} />
+              </div>
             ) : datosAlumnoDetalle ? (
               <>
                 <div className={styles.alumnoResumenCard}>
@@ -307,7 +314,7 @@ export const CoordinadorDashboard = () => {
                 )}
               </>
             ) : (
-              <p>No fue posible cargar el detalle del alumno.</p>
+              <p className={styles.emptyState}>No fue posible cargar el detalle del alumno.</p>
             )}
           </div>
         )}
@@ -319,7 +326,7 @@ export const CoordinadorDashboard = () => {
             <p>Administra las materias de la carrera y supervisa su oferta académica.</p>
             
             {cargandoMaterias ? (
-              <p>Cargando materias...</p>
+              <p className={styles.loadingState}>Cargando materias...</p>
             ) : materias.length > 0 ? (
               <table className={styles.tabla}>
                 <thead>
@@ -327,35 +334,28 @@ export const CoordinadorDashboard = () => {
                     <th>Código</th>
                     <th>Nombre de la Materia</th>
                     <th>Créditos</th>
-                    <th>Semestre</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th>Bloque</th>
+                    <th>Semestre sugerido</th>
+                    <th>Origen</th>
+                    <th>Minor</th>
                   </tr>
                 </thead>
                 <tbody>
                   {materias.map((materia) => (
-                    <tr key={materia.id}>
+                    <tr key={`${materia.id}-${materia.origen_oferta}-${materia.minor_nombre || "base"}`}>
                       <td>{materia.codigo}</td>
                       <td>{materia.nombre}</td>
                       <td>{materia.creditos}</td>
-                      <td>{materia.semestre}</td>
-                      <td>
-                        <span className={materia.estatus ? styles.estadoActivo : styles.estadoInactivo}>
-                          {materia.estatus ? "Activa" : "Inactiva"}
-                        </span>
-                      </td>
-                      <td>
-                        <button className={styles.boton} style={{ marginRight: "5px" }}>
-                          Editar
-                        </button>
-                        <button className={styles.boton}>Ver Secciones</button>
-                      </td>
+                      <td>{materia.tipo_bloque}</td>
+                      <td>{materia.semestre ?? "Sin definir"}</td>
+                      <td>{materia.origen_oferta === "plan_fijo" ? "Plan fijo" : materia.origen_oferta === "minor" ? "Minor" : "Oferta carrera"}</td>
+                      <td>{materia.minor_nombre || "-"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p>No hay materias disponibles para esta carrera.</p>
+              <p className={styles.emptyState}>No hay materias disponibles para esta carrera.</p>
             )}
           </div>
         )}
@@ -367,7 +367,7 @@ export const CoordinadorDashboard = () => {
             <p>Consulta y administra los horarios de clases y secciones de la carrera.</p>
             
             {cargandoHorarios ? (
-              <p>Cargando horarios...</p>
+              <p className={styles.loadingState}>Cargando horarios...</p>
             ) : horarios.length > 0 ? (
               <table className={styles.tabla}>
                 <thead>
@@ -396,7 +396,7 @@ export const CoordinadorDashboard = () => {
                 </tbody>
               </table>
             ) : (
-              <p>No hay horarios disponibles para esta carrera.</p>
+              <p className={styles.emptyState}>No hay horarios disponibles para esta carrera.</p>
             )}
           </div>
         )}
@@ -407,47 +407,43 @@ export const CoordinadorDashboard = () => {
             <h1>Reportes Académicos</h1>
             <p>Genera y consulta reportes sobre desempeño académico, inscripciones y estadísticas de la carrera.</p>
             
-            <div style={{ marginTop: "20px" }}>
+            <div className={styles.reportesDisponibles}>
               <h2>Reportes Disponibles</h2>
               
               <button 
-                className={styles.boton} 
-                style={{ marginRight: "10px", marginBottom: "10px" }}
+                className={`${styles.boton} ${styles.reporteBoton}`}
                 onClick={() => usuario?.carrera_id && coordinadorService.getReporteInscripciones(usuario.carrera_id, filtroSemestre !== 'todos' ? filtroSemestre : undefined, filtroPeriodo)}
               >
                 📊 Reporte de Inscripciones
               </button>
               <button 
-                className={styles.boton} 
-                style={{ marginRight: "10px", marginBottom: "10px" }}
+                className={`${styles.boton} ${styles.reporteBoton}`}
                 onClick={() => usuario?.carrera_id && coordinadorService.getReporteRendimiento(usuario.carrera_id, filtroSemestre !== 'todos' ? filtroSemestre : undefined, filtroPeriodo)}
               >
                 📈 Reporte de Rendimiento
               </button>
               <button 
-                className={styles.boton} 
-                style={{ marginRight: "10px", marginBottom: "10px" }}
+                className={`${styles.boton} ${styles.reporteBoton}`}
                 onClick={() => usuario?.carrera_id && coordinadorService.getReporteDesercion(usuario.carrera_id, filtroSemestre !== 'todos' ? filtroSemestre : undefined, filtroPeriodo)}
               >
                 📋 Reporte de Deserción
               </button>
               <button 
-                className={styles.boton} 
-                style={{ marginRight: "10px", marginBottom: "10px" }}
+                className={`${styles.boton} ${styles.reporteBoton}`}
                 onClick={() => usuario?.carrera_id && coordinadorService.getReporteAprobacion(usuario.carrera_id, filtroSemestre !== 'todos' ? filtroSemestre : undefined, filtroPeriodo)}
               >
                 🎯 Reporte de Aprobación
               </button>
             </div>
 
-            <h2 style={{ marginTop: "40px" }}>Filtros de Reportes</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: "15px" }}>
-              <div>
-                <label style={{ fontWeight: "600", display: "block", marginBottom: "5px" }}>Semestre:</label>
+            <h2 className={styles.filtrosTitulo}>Filtros de Reportes</h2>
+            <div className={styles.filtrosGrid}>
+              <div className={styles.filtroItem}>
+                <label className={styles.filtroLabel}>Semestre:</label>
                 <select 
                   value={filtroSemestre}
                   onChange={(e) => setFiltroSemestre(e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #ddd" }}
+                  className={styles.filtroSelect}
                 >
                   <option value="todos">Todos</option>
                   <option value="1">1er Semestre</option>
@@ -456,12 +452,12 @@ export const CoordinadorDashboard = () => {
                   <option value="4">4to Semestre</option>
                 </select>
               </div>
-              <div>
-                <label style={{ fontWeight: "600", display: "block", marginBottom: "5px" }}>Período Académico:</label>
+              <div className={styles.filtroItem}>
+                <label className={styles.filtroLabel}>Período Académico:</label>
                 <select 
                   value={filtroPeriodo}
                   onChange={(e) => setFiltroPeriodo(e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #ddd" }}
+                  className={styles.filtroSelect}
                 >
                   <option value="2024-2025">2024-2025</option>
                   <option value="2023-2024">2023-2024</option>

@@ -1,0 +1,107 @@
+.wrapper {
+  margin-top: 20px;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.statusBox {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.statusBoxError {
+  color: var(--color-danger);
+  border-color: rgba(217, 45, 32, 0.3);
+  background: rgba(217, 45, 32, 0.08);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.tableHead {
+  background-color: var(--color-surface-muted);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.tableHeaderCell {
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--color-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tableRow:hover {
+  background: rgba(255, 88, 0, 0.05);
+}
+
+.tableCell {
+  padding: 12px 14px;
+  color: var(--color-text-muted);
+}
+
+.estadoOk {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.estadoBad {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pageButton {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.pageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageButtonActive {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.footerNote {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: right;
+}

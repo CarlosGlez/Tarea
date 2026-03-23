@@ -3,6 +3,19 @@ import db from '../config/db.js'
 
 const router = express.Router()
 
+const ofertaMateriasPorCarrera = `
+  SELECT cm.materia_id, cm.semestre_sugerido
+  FROM carrera_materias cm
+  WHERE cm.carrera_id = ? AND cm.disponible = 1
+
+  UNION
+
+  SELECT mm.materia_id, mm.semestre_sugerido
+  FROM carrera_minors cmn
+  JOIN minor_materias mm ON mm.minor_id = cmn.minor_id
+  WHERE cmn.carrera_id = ? AND cmn.activo = 1
+`
+
 // ========================================
 // ENDPOINTS DEL COORDINADOR
 // ========================================
@@ -84,16 +97,37 @@ router.get('/materias', (req, res) => {
   }
 
   const query = `
-    SELECT m.id, m.codigo, m.nombre, m.creditos, m.tipo_bloque, m.modalidad,
-           pm.semestre, pm.plan_id
-    FROM materias m
-    JOIN plan_materias pm ON m.id = pm.materia_id
-    JOIN planes_estudio p ON pm.plan_id = p.id
-    WHERE p.carrera_id = ?
-    ORDER BY pm.semestre, m.nombre
+    SELECT *
+    FROM (
+      SELECT m.id, m.codigo, m.nombre, m.creditos, m.tipo_bloque, m.modalidad,
+             cm.semestre_sugerido AS semestre,
+             CASE WHEN cm.obligatoria_en_plan = 1 THEN 'plan_fijo' ELSE 'oferta_carrera' END AS origen_oferta,
+             cm.obligatoria_en_plan,
+             NULL AS minor_nombre
+      FROM carrera_materias cm
+      JOIN materias m ON m.id = cm.materia_id
+      WHERE cm.carrera_id = ? AND cm.disponible = 1
+
+      UNION ALL
+
+      SELECT m.id, m.codigo, m.nombre, m.creditos, m.tipo_bloque, m.modalidad,
+             mm.semestre_sugerido AS semestre,
+             'minor' AS origen_oferta,
+             0 AS obligatoria_en_plan,
+             mn.nombre AS minor_nombre
+      FROM carrera_minors cmn
+      JOIN minors mn ON mn.id = cmn.minor_id
+      JOIN minor_materias mm ON mm.minor_id = mn.id
+      JOIN materias m ON m.id = mm.materia_id
+      WHERE cmn.carrera_id = ? AND cmn.activo = 1
+    ) oferta
+    ORDER BY
+      CASE WHEN semestre IS NULL THEN 999 ELSE semestre END,
+      origen_oferta,
+      nombre
   `
   
-  db.query(query, [carrera_id], (err, results) => {
+  db.query(query, [carrera_id, carrera_id], (err, results) => {
     if (err) {
       console.error('Error en GET /api/coordinador/materias:', err)
       return res.status(500).json(err)
@@ -117,15 +151,22 @@ router.get('/horarios', (req, res) => {
     FROM secciones s
     JOIN materias m ON s.materia_id = m.id
     JOIN usuarios u ON s.profesor_id = u.id
-    JOIN plan_materias pm ON m.id = pm.materia_id
-    JOIN planes_estudio p ON pm.plan_id = p.id
     LEFT JOIN enrolamiento e ON s.id = e.seccion_id
-    WHERE p.carrera_id = ?
+    WHERE EXISTS (
+      SELECT 1
+      FROM carrera_materias cm
+      WHERE cm.carrera_id = ? AND cm.disponible = 1 AND cm.materia_id = m.id
+    ) OR EXISTS (
+      SELECT 1
+      FROM carrera_minors cmn
+      JOIN minor_materias mm ON mm.minor_id = cmn.minor_id
+      WHERE cmn.carrera_id = ? AND cmn.activo = 1 AND mm.materia_id = m.id
+    )
     GROUP BY s.id
     ORDER BY m.nombre, s.seccion
   `
   
-  db.query(query, [carrera_id], (err, results) => {
+  db.query(query, [carrera_id, carrera_id], (err, results) => {
     if (err) {
       console.error('Error en GET /api/coordinador/horarios:', err)
       // Si la tabla no existe, devolver array vacío
@@ -151,18 +192,14 @@ router.get('/estadisticas', (req, res) => {
       (SELECT COUNT(DISTINCT a.id_alumno) FROM alumnos a
        JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
        WHERE ac.carrera_id = ? AND ac.activo = 1 AND a.estatus_academico = 'inscrito') as totalAlumnos,
-      (SELECT COUNT(*) FROM materias m
-       JOIN plan_materias pm ON m.id = pm.materia_id
-       JOIN planes_estudio p ON pm.plan_id = p.id
-       WHERE p.carrera_id = ?) as totalMaterias,
-      (SELECT COUNT(*) FROM secciones s
-       JOIN materias m ON s.materia_id = m.id
-       JOIN plan_materias pm ON m.id = pm.materia_id
-       JOIN planes_estudio p ON pm.plan_id = p.id
-       WHERE p.carrera_id = ?) as totalSecciones
+      (SELECT COUNT(DISTINCT oferta.materia_id)
+       FROM (${ofertaMateriasPorCarrera}) oferta) as totalMaterias,
+      (SELECT COUNT(DISTINCT s.id)
+       FROM secciones s
+       JOIN (${ofertaMateriasPorCarrera}) oferta ON oferta.materia_id = s.materia_id) as totalSecciones
   `
   
-  db.query(query, [carrera_id, carrera_id, carrera_id], (err, results) => {
+  db.query(query, [carrera_id, carrera_id, carrera_id, carrera_id, carrera_id], (err, results) => {
     if (err) {
       console.error('Error en GET /api/coordinador/estadisticas:', err)
       return res.status(500).json(err)
@@ -313,17 +350,16 @@ router.get('/reportes/aprobacion', (req, res) => {
       COUNT(DISTINCT h.alumno_id) as estudiantes_totales,
       SUM(CASE WHEN h.estatus = 'aprobada' THEN 1 ELSE 0 END) as estudiantes_aprobados,
       ROUND((SUM(CASE WHEN h.estatus = 'aprobada' THEN 1 ELSE 0 END) / COUNT(DISTINCT h.alumno_id) * 100), 2) as tasa_aprobacion
-    FROM materias m
-    JOIN plan_materias pm ON m.id = pm.materia_id
-    JOIN planes_estudio p ON pm.plan_id = p.id
+    FROM (${ofertaMateriasPorCarrera}) oferta
+    JOIN materias m ON m.id = oferta.materia_id
     LEFT JOIN historial_academico h ON m.id = h.materia_id
-    WHERE p.carrera_id = ?
+    WHERE 1 = 1
   `
   
-  const params = [carrera_id]
+  const params = [carrera_id, carrera_id]
   
   if (semestre) {
-    query += ` AND pm.semestre = ?`
+    query += ` AND oferta.semestre_sugerido = ?`
     params.push(semestre)
   }
   

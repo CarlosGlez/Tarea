@@ -1,5 +1,6 @@
 // Componente de barra lateral reutilizable
 import { useState } from "react"
+import { ThemeToggle } from "./ThemeToggle"
 import styles from "./Sidebar.module.css"
 
 // Props que acepta el Sidebar
@@ -15,6 +16,7 @@ interface SidebarProps {
 export const Sidebar = ({ title, menuItems }: SidebarProps) => {
   // Estado para controlar si la sidebar está colapsada
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   // Función para toggle de la sidebar
   const toggleSidebar = () => {
@@ -38,17 +40,25 @@ export const Sidebar = ({ title, menuItems }: SidebarProps) => {
       {/* Menú con enlaces */}
       <ul className={styles.menu}>
         {menuItems.map((item, index) => (
-          <li key={index}>
+          <li key={index} className={index === activeIndex ? styles.menuItemActive : ""}>
             <i className={`fas ${item.icon}`}></i>
-            <button onClick={item.onClick} className={styles.menuButton}>
-              {item.label}
+            <button
+              onClick={() => {
+                setActiveIndex(index)
+                item.onClick()
+              }}
+              className={`${styles.menuButton} ${index === activeIndex ? styles.menuButtonActive : ""}`}
+            >
+              <span className={styles.menuLabel}>{item.label}</span>
             </button>
           </li>
         ))}
       </ul>
 
-      {/* Icono inferior (opcional) */}
-      <div className={styles.bottomIcon}></div>
+      {/* Icono inferior (toggle de tema) */}
+      <div className={styles.bottomIcon}>
+        <ThemeToggle />
+      </div>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 -- ========================================
 -- SCRIPT: Asignar materias al Plan de Estudios ISND
 -- ========================================
+-- Este script deja en el plan solo las materias fijas.
+-- Las electivas comunes y las materias por minor se cargan aparte.
 
 -- Obtener el ID del plan de estudios de ISND
 SET @plan_id = (SELECT id FROM planes_estudio WHERE nombre = 'Plan 2020' AND carrera_id = (SELECT id FROM carreras WHERE abreviatura = 'ISND'));
@@ -60,31 +62,6 @@ INSERT INTO plan_materias (plan_id, materia_id, semestre) VALUES
 (@plan_id, (SELECT id FROM materias WHERE codigo = 'HUM1404'), 7), -- Ética
 (@plan_id, (SELECT id FROM materias WHERE codigo = 'HUM1405'), 7), -- Humanismo clásico y contemporáneo
 (@plan_id, (SELECT id FROM materias WHERE codigo = 'HUM1403'), 7); -- Persona y trascendencia
-
--- ========================================
--- SEMESTRE 8 - BLOQUE ANAHUAC ELECTIVO
--- ========================================
-INSERT INTO plan_materias (plan_id, materia_id, semestre) VALUES
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'ELDR2401'), 8), -- Administración de proyectos de responsabilidad social
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'ECUG1414'), 8), -- La persona frente a la crisis ecológica
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'ELDR1405'), 8); -- Pensamiento crítico y creativo
-
--- ========================================
--- SEMESTRE 9 - BLOQUE PROFESIONAL ELECTIVO
--- ========================================
-INSERT INTO plan_materias (plan_id, materia_id, semestre) VALUES
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'FIN2404'), 9), -- Administración financiera
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'ADM3403'), 9), -- Comportamiento organizacional
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'MER1403'), 9); -- Conducta del consumidor
-
--- ========================================
--- SEMESTRE 10 - BLOQUE INTERDISCIPLINARIO ELECTIVO
--- ========================================
-INSERT INTO plan_materias (plan_id, materia_id, semestre) VALUES
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'EGA1005'), 10), -- Taller de arte y cultura II
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'EGA1104'), 10), -- Taller de deportes I
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'EGA1106'), 10), -- Taller de deportes III
-(@plan_id, (SELECT id FROM materias WHERE codigo = 'ISOC1406'), 10); -- Temas selectos interdisciplinarios I
 
 -- ========================================
 -- VERIFICACIÓN

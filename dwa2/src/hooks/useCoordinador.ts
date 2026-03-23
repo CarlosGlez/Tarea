@@ -1,15 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import * as coordinadorService from "../data/coordinadorService"
 import type { Alumno } from "../types/Carrera"
-
-interface Materia {
-  id: number
-  nombre: string
-  codigo: string
-  creditos: number
-  semestre: number
-  estatus: boolean
-}
+import type { MateriaCarrera } from "../types/MateriaCarrera"
 
 interface Horario {
   id: number
@@ -69,7 +61,7 @@ export const useAlumnosByCarrera = (carreraId: number | null) => {
 
 // Hook para obtener materias de la carrera
 export const useMateriasByCarrera = (carreraId: number | null) => {
-  const [materias, setMaterias] = useState<Materia[]>([])
+  const [materias, setMaterias] = useState<MateriaCarrera[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
