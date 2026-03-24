@@ -47,6 +47,39 @@
   line-height: 1.6;
 }
 
+.submenuTabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 18px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.submenuTabButton {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.submenuTabButton:hover {
+  background: rgba(255, 88, 0, 0.1);
+  color: var(--color-primary);
+}
+
+.activeSubmenuTab {
+  background: var(--color-primary);
+  color: white;
+}
+
 /* Datos del usuario */
 .datosUsuario {
   background-color: var(--color-surface-muted);
@@ -447,5 +480,15 @@
 
   .modal form {
     padding: 15px;
+  }
+
+  .submenuTabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .submenuTabButton {
+    flex: 1;
+    text-align: center;
   }
 }

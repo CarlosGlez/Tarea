@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { UsuariosList } from "../components/UsuariosList"
 import { CarrerasList } from "../components/CarrerasList"
+import { PlanesBuilder } from "../components/PlanesBuilder"
 import styles from "./AdminDashboard.module.css"
+
+interface UsuarioDashboard {
+  nombre: string | null
+  rol: string | null
+}
 
 export const AdminDashboard = () => {
   // Estado para guardar datos del usuario
-  const [usuario, setUsuario] = useState<any>(null)
+  const [usuario] = useState<UsuarioDashboard>(() => ({
+    nombre: localStorage.getItem("nombre"),
+    rol: localStorage.getItem("rol"),
+  }))
   // Estado para controlar qué sección se muestra
   const [seccionActual, setSeccionActual] = useState("inicio")
-
-  // Cargar datos del usuario desde localStorage
-  useEffect(() => {
-    const nombre = localStorage.getItem("nombre")
-    const rol = localStorage.getItem("rol")
-    setUsuario({ nombre, rol })
-  }, [])
+  const [subseccionCarreras, setSubseccionCarreras] = useState<"carreras" | "planes">("carreras")
 
   // Función para logout
   const handleLogout = () => {
@@ -67,8 +70,26 @@ export const AdminDashboard = () => {
         {seccionActual === "carreras" && (
           <div className={styles.seccion}>
             <h1>Gestión de Carreras</h1>
-            <p>Visualiza todas las carreras, sus planes de estudio y los alumnos inscritos.</p>
-            <CarrerasList />
+            <p>Administra carreras y diseña planes de estudio por semestre desde un editor interactivo.</p>
+
+            <div className={styles.submenuTabs}>
+              <button
+                className={`${styles.submenuTabButton} ${subseccionCarreras === "carreras" ? styles.activeSubmenuTab : ""}`}
+                onClick={() => setSubseccionCarreras("carreras")}
+                type="button"
+              >
+                Carreras
+              </button>
+              <button
+                className={`${styles.submenuTabButton} ${subseccionCarreras === "planes" ? styles.activeSubmenuTab : ""}`}
+                onClick={() => setSubseccionCarreras("planes")}
+                type="button"
+              >
+                Planes Interactivos
+              </button>
+            </div>
+
+            {subseccionCarreras === "carreras" ? <CarrerasList /> : <PlanesBuilder />}
           </div>
         )}
       </div>

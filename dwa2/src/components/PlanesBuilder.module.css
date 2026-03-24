@@ -1,0 +1,438 @@
+.container {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.header h2 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+}
+
+.topControls {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 220px 220px 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.selectorBlock,
+.inlineField {
+  display: grid;
+  gap: 6px;
+}
+
+.selectorBlock label,
+.inlineField label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.selectorBlock select,
+.inlineField input,
+.createPlanForm select,
+.createPlanForm input,
+.cardActions select,
+.semesterSelector select,
+.leftPanelHeader input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.selectorBlock select:focus,
+.inlineField input:focus,
+.cardActions select:focus,
+.semesterSelector select:focus,
+.leftPanelHeader input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 88, 0, 0.14);
+}
+
+.createPlanForm {
+  display: grid;
+  grid-template-columns: 1fr 170px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.createButton,
+.saveButton,
+.materiaCard button,
+.cardActions button {
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.createButton,
+.saveButton {
+  background: var(--color-primary);
+  color: white;
+  padding: 10px 14px;
+}
+
+.createButton:disabled,
+.saveButton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.errorMessage,
+.successMessage {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.errorMessage {
+  color: var(--color-danger);
+}
+
+.successMessage {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.colorLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.legendItem {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.emptyState {
+  margin-top: 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  padding: 14px;
+}
+
+.workspace {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 14px;
+  min-height: 560px;
+}
+
+.leftPanel,
+.rightPanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.leftPanelHeader {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+  display: grid;
+  gap: 10px;
+}
+
+.leftPanelHeader h3,
+.rightHeader h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 17px;
+}
+
+.semesterSelector {
+  display: grid;
+  gap: 6px;
+}
+
+.semesterSelector label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.materiasList {
+  padding: 12px;
+  overflow-y: auto;
+  max-height: 620px;
+  display: grid;
+  gap: 10px;
+}
+
+.statusText {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+.dragHint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.materiaCard,
+.assignedCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: 6px;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+
+.draggableCard {
+  cursor: grab;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.draggableCard:active {
+  cursor: grabbing;
+}
+
+.draggingCard {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+}
+
+.cardDropTarget {
+  outline: 2px dashed rgba(44, 168, 171, 0.8);
+  outline-offset: 2px;
+}
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(22, 31, 45, 0.78);
+  user-select: none;
+}
+
+.blockProfesional {
+  background: #b8dde0;
+  border-left-color: #2ca8ab;
+}
+
+.blockAnahuac {
+  background: #f3d3bd;
+  border-left-color: #f27a2f;
+}
+
+.blockElectiva {
+  background: #f4c2d2;
+  border-left-color: #d81b60;
+}
+
+.dropTargetActive {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: 1px;
+  background: rgba(255, 88, 0, 0.08);
+}
+
+.dragOverlayCard {
+  width: 220px;
+  border: 1px solid var(--color-border);
+  border-left-width: 6px;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+  transform: rotate(-1deg);
+}
+
+.dragOverlayCard h5 {
+  margin: 3px 0;
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.materiaCard h4,
+.assignedCard h5 {
+  margin: 3px 0;
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.materiaCode {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.metaText {
+  margin: 0 0 6px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.blockTag {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(22, 31, 45, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.materiaCard button {
+  width: 100%;
+  background: var(--color-success);
+  color: var(--color-surface);
+  padding: 8px 10px;
+}
+
+.rightPanel {
+  padding: 14px;
+  background: #eef1f3;
+}
+
+.rightHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.semestersGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.semesterColumn {
+  background: #f8f9fa;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.semesterColumn header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 4px 2px;
+}
+
+.semesterNumber {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+}
+
+.semesterMeta {
+  display: grid;
+  gap: 2px;
+}
+
+.semesterMeta p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.semesterMeta span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.semesterCards {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  grid-auto-rows: minmax(104px, auto);
+  flex: 1;
+}
+
+.emptySemester {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.cardActions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.cardActions button {
+  background: var(--color-danger);
+  color: white;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.cardActions select {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 1200px) {
+  .topControls {
+    grid-template-columns: 1fr;
+  }
+
+  .createPlanForm {
+    grid-template-columns: 1fr 1fr auto;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .createPlanForm {
+    grid-template-columns: 1fr;
+  }
+
+  .semestersGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .colorLegend {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

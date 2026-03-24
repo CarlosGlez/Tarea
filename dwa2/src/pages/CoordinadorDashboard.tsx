@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { UsuariosList } from "../components/UsuariosList"
+import { CarrerasList } from "../components/CarrerasList"
 import { useAlumnosByCarrera, useMateriasByCarrera, useHorariosByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
 import * as coordinadorService from "../data/coordinadorService"
 import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
@@ -123,7 +124,8 @@ export const CoordinadorDashboard = () => {
   // Elementos del menú de la sidebar
   const menuItems = [
     { label: "Inicio", icon: "fa-home", onClick: () => setSeccionActual("inicio") },
-    { label: "Alumnos", icon: "fa-users", onClick: () => setSeccionActual("alumnos") },
+    { label: "Alumnos de mi carrera", icon: "fa-users", onClick: () => setSeccionActual("alumnos") },
+    { label: "Gestión de Carreras", icon: "fa-graduation-cap", onClick: () => setSeccionActual("carreras") },
     { label: "Materias", icon: "fa-book", onClick: () => setSeccionActual("materias") },
     { label: "Horarios", icon: "fa-calendar", onClick: () => setSeccionActual("horarios") },
     { label: "Reportes", icon: "fa-chart-bar", onClick: () => setSeccionActual("reportes") },
@@ -180,8 +182,8 @@ export const CoordinadorDashboard = () => {
         {/* Sección de Gestión de Alumnos */}
         {seccionActual === "alumnos" && (
           <div className={styles.seccion}>
-            <h1>Gestión de Alumnos</h1>
-            <p>Visualiza y gestiona todos los alumnos inscritos en la carrera de <strong>{usuario?.carrera_nombre}</strong>.</p>
+            <h1>Alumnos de mi carrera</h1>
+            <p>Visualiza y gestiona los alumnos inscritos en <strong>{usuario?.carrera_nombre}</strong>.</p>
             
             {cargandoAlumnos ? (
               <div className={styles.skeletonRows}>
@@ -199,6 +201,15 @@ export const CoordinadorDashboard = () => {
             ) : (
               <p className={styles.emptyState}>No hay alumnos registrados en esta carrera.</p>
             )}
+          </div>
+        )}
+
+        {/* Sección de Gestión de Carreras */}
+        {seccionActual === "carreras" && (
+          <div className={styles.seccion}>
+            <h1>Gestión de Carreras</h1>
+            <p>Consulta todas las carreras, sus planes de estudio y los alumnos inscritos en cada una.</p>
+            <CarrerasList />
           </div>
         )}
 

@@ -11,45 +11,217 @@
   color: var(--color-primary);
 }
 
-.carrerasList {
-  list-style: none;
-  padding: 0;
+.form {
+  margin-bottom: 24px;
+  padding: 18px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.formHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.formHeader h3 {
   margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+}
+
+.formGrid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
-.carreraItem {
-  margin-bottom: 0;
+.fieldGroup {
+  display: grid;
+  gap: 6px;
 }
 
-.carreraButton {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
-  color: white;
-  border: none;
-  padding: 14px 16px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  font-size: 16px;
+.fieldGroup label {
+  font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 8px 20px rgba(255, 88, 0, 0.22);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  color: var(--color-text);
 }
 
-.carreraButton:hover {
+.fieldGroup input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.fieldGroup input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 88, 0, 0.12);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.createButton {
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: white;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.createButton:hover:not(:disabled) {
+  background: var(--color-primary-strong);
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(255, 88, 0, 0.28);
+}
+
+.createButton:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.secondaryButton,
+.editButton,
+.deleteButton {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.secondaryButton {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.editButton {
+  background: #0d6efd;
+  color: white;
+}
+
+.deleteButton {
+  background: var(--color-danger);
+  color: white;
+}
+
+.secondaryButton:hover,
+.editButton:hover,
+.deleteButton:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.errorMessage {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 14px;
+}
+
+.successMessage {
+  margin: 0;
+  color: var(--color-success);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.managementTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.managementTable th,
+.managementTable td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  color: var(--color-text);
+}
+
+.managementTable th {
+  background: rgba(255, 88, 0, 0.1);
+  color: var(--color-primary);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.managementTable tbody tr:hover {
+  background: rgba(255, 88, 0, 0.04);
+}
+
+.managementTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.selectedRow {
+  background: rgba(255, 88, 0, 0.06);
+}
+
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .details {
-  margin-top: 15px;
+  margin-top: 18px;
   padding: 18px;
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   border-left: 4px solid var(--color-primary);
   border-radius: var(--radius-md);
+}
+
+.detailsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.detailsHeader h3 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 88, 0, 0.12);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .section {
@@ -141,6 +313,19 @@
 }
 
 @media (max-width: 900px) {
+  .formHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .managementTable {
+    min-width: 720px;
+  }
+
   .table {
     display: block;
     overflow-x: auto;

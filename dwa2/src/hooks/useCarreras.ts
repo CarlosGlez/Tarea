@@ -7,21 +7,25 @@ export const useCarreras = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchCarreras = async () => {
-      try {
-        const data = await getCarreras()
-        setCarreras(data)
-      } catch (err) {
-        setError("Error al cargar carreras")
-      } finally {
-        setLoading(false)
-      }
+  const fetchCarreras = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const data = await getCarreras()
+      setCarreras(data)
+    } catch (err) {
+      setError("Error al cargar carreras")
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchCarreras()
   }, [])
 
-  return { carreras, loading, error }
+  return { carreras, loading, error, refetchCarreras: fetchCarreras }
 }
 
 export const usePlanesByCarrera = (carreraId: number) => {
