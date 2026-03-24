@@ -313,7 +313,7 @@
 
 .rightPanel {
   padding: 14px;
-  background: #eef1f3;
+  background: var(--color-surface-muted);
 }
 
 .rightHeader {
@@ -332,7 +332,7 @@
 }
 
 .semesterColumn {
-  background: #f8f9fa;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 8px;
@@ -435,4 +435,44 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* =========================================================
+   Dark mode overrides
+   ========================================================= */
+
+:global([data-theme="dark"]) .blockProfesional {
+  background: #0d2f31;
+  border-left-color: #38bec3;
+}
+
+:global([data-theme="dark"]) .blockAnahuac {
+  background: #2c1a08;
+  border-left-color: #f27a2f;
+}
+
+:global([data-theme="dark"]) .blockElectiva {
+  background: #2c0a18;
+  border-left-color: #e91e8c;
+}
+
+:global([data-theme="dark"]) .dragHandle {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(210, 225, 245, 0.75);
+}
+
+:global([data-theme="dark"]) .blockTag {
+  color: rgba(210, 225, 245, 0.75);
+}
+
+:global([data-theme="dark"]) .legendItem {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global([data-theme="dark"]) .dropTargetActive {
+  background: rgba(255, 88, 0, 0.15);
+}
+
+:global([data-theme="dark"]) .cardDropTarget {
+  outline-color: rgba(56, 190, 195, 0.85);
 }
