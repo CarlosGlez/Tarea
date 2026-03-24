@@ -14,6 +14,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { useCarreras } from "../hooks/useCarreras"
 import {
+  createMateria,
   createPlanByCarrera,
   getMateriasCatalogo,
   getPlanMaterias,
@@ -171,9 +172,14 @@ export const PlanesBuilder = () => {
 
   const [planNombre, setPlanNombre] = useState("")
   const [planAnio, setPlanAnio] = useState("")
+  const [materiaNombre, setMateriaNombre] = useState("")
+  const [materiaBloque, setMateriaBloque] = useState("Bloque Profesional")
+  const [materiaModalidad, setMateriaModalidad] = useState("Presencial")
+  const [materiaCreditos, setMateriaCreditos] = useState("")
   const [busqueda, setBusqueda] = useState("")
   const [semestreDestino, setSemestreDestino] = useState<number>(1)
   const [activeMateriaId, setActiveMateriaId] = useState<number | null>(null)
+  const [creatingMateria, setCreatingMateria] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -385,6 +391,46 @@ export const PlanesBuilder = () => {
       setError(err instanceof Error ? err.message : "No se pudo guardar la distribucion")
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleCrearMateria = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const nombre = materiaNombre.trim()
+    const creditos = Number(materiaCreditos)
+
+    if (!nombre) {
+      setError("El nombre de la materia es obligatorio")
+      return
+    }
+
+    if (!Number.isInteger(creditos) || creditos < 1 || creditos > 20) {
+      setError("Los creditos deben ser un numero entero entre 1 y 20")
+      return
+    }
+
+    setCreatingMateria(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const materiaCreada = await createMateria({
+        nombre,
+        tipo_bloque: materiaBloque,
+        creditos,
+        modalidad: materiaModalidad,
+      })
+
+      setMateriasCatalogo((current) => [...current, materiaCreada].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+      setMateriaNombre("")
+      setMateriaCreditos("")
+      setMateriaModalidad("Presencial")
+      setSuccess(`Materia creada con codigo ${materiaCreada.codigo}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear la materia")
+    } finally {
+      setCreatingMateria(false)
     }
   }
 
@@ -605,6 +651,51 @@ export const PlanesBuilder = () => {
                   </select>
                 </div>
                 <p className={styles.dragHint}>Arrastra materias al semestre deseado.</p>
+
+                <form className={styles.createMateriaForm} onSubmit={handleCrearMateria}>
+                  <h4>Nueva materia</h4>
+
+                  <div className={styles.createMateriaFields}>
+                    <input
+                      type="text"
+                      value={materiaNombre}
+                      onChange={(event) => setMateriaNombre(event.target.value)}
+                      placeholder="Nombre de la materia"
+                      disabled={creatingMateria}
+                    />
+                    <select
+                      value={materiaBloque}
+                      onChange={(event) => setMateriaBloque(event.target.value)}
+                      disabled={creatingMateria}
+                    >
+                      <option value="Bloque Profesional">Bloque Profesional</option>
+                      <option value="Bloque Anahuac">Bloque Anahuac</option>
+                      <option value="Electiva">Electiva</option>
+                    </select>
+                    <select
+                      value={materiaModalidad}
+                      onChange={(event) => setMateriaModalidad(event.target.value)}
+                      disabled={creatingMateria}
+                    >
+                      <option value="Presencial">Presencial</option>
+                      <option value="En linea">En linea</option>
+                      <option value="Mixta">Mixta</option>
+                    </select>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={materiaCreditos}
+                      onChange={(event) => setMateriaCreditos(event.target.value)}
+                      placeholder="Creditos"
+                      disabled={creatingMateria}
+                    />
+                  </div>
+
+                  <button type="submit" disabled={creatingMateria}>
+                    {creatingMateria ? "Creando materia..." : "Crear materia"}
+                  </button>
+                </form>
               </div>
 
               <div

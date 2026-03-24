@@ -3,6 +3,9 @@ import db from '../config/db.js'
 
 const router = express.Router()
 
+const estatusAcademicosValidos = new Set(['aprobada', 'no_aprobada', 'no_cursada', 'revalidar', 'cursando'])
+const estatusConCalificacion = new Set(['aprobada', 'no_aprobada', 'revalidar'])
+
 const ofertaMateriasPorCarrera = `
   SELECT cm.materia_id, cm.semestre_sugerido
   FROM carrera_materias cm
@@ -371,6 +374,99 @@ router.get('/reportes/aprobacion', (req, res) => {
       return res.status(500).json(err)
     }
     res.json(results)
+  })
+})
+
+// PUT /api/coordinador/alumnos/:alumnoId/materias/:materiaId
+// Actualiza estatus/calificación de una materia para un alumno de la carrera del coordinador.
+router.put('/alumnos/:alumnoId/materias/:materiaId', (req, res) => {
+  const { alumnoId, materiaId } = req.params
+  const { carrera_id, estatus, calificacion, periodo } = req.body
+
+  if (!carrera_id) {
+    return res.status(400).json({ message: 'carrera_id es requerido' })
+  }
+
+  if (!estatus || !estatusAcademicosValidos.has(estatus)) {
+    return res.status(400).json({ message: 'estatus invalido' })
+  }
+
+  const requiereCalificacion = estatusConCalificacion.has(estatus)
+  const calificacionNumerica = calificacion === null || calificacion === undefined || calificacion === ''
+    ? null
+    : Number(calificacion)
+
+  if (requiereCalificacion && (calificacionNumerica === null || Number.isNaN(calificacionNumerica))) {
+    return res.status(400).json({ message: 'calificacion es requerida para este estatus' })
+  }
+
+  if (calificacionNumerica !== null && (Number.isNaN(calificacionNumerica) || calificacionNumerica < 0 || calificacionNumerica > 100)) {
+    return res.status(400).json({ message: 'calificacion debe estar entre 0 y 100' })
+  }
+
+  const calificacionFinal = requiereCalificacion ? calificacionNumerica : null
+  const periodoFinal = estatus === 'no_cursada' ? null : (periodo || null)
+
+  const accesoQuery = `
+    SELECT a.id_alumno
+    FROM alumnos a
+    JOIN alumno_carrera ac ON ac.alumno_id = a.id_alumno AND ac.activo = 1
+    JOIN plan_materias pm ON pm.plan_id = a.plan_id
+    WHERE a.id_alumno = ? AND ac.carrera_id = ? AND pm.materia_id = ?
+    LIMIT 1
+  `
+
+  db.query(accesoQuery, [alumnoId, carrera_id, materiaId], (accesoErr, accesoRows) => {
+    if (accesoErr) {
+      console.error('Error validando acceso en actualización de materia:', accesoErr)
+      return res.status(500).json(accesoErr)
+    }
+
+    if (!accesoRows || accesoRows.length === 0) {
+      return res.status(404).json({ message: 'Alumno o materia no valida para esta carrera' })
+    }
+
+    db.query(
+      `SELECT id FROM historial_academico WHERE alumno_id = ? AND materia_id = ? ORDER BY id DESC LIMIT 1`,
+      [alumnoId, materiaId],
+      (historialErr, historialRows) => {
+        if (historialErr) {
+          console.error('Error consultando historial academico:', historialErr)
+          return res.status(500).json(historialErr)
+        }
+
+        if (historialRows.length > 0) {
+          const historialId = historialRows[0].id
+          db.query(
+            `UPDATE historial_academico
+             SET estatus = ?, calificacion = ?, periodo = ?
+             WHERE id = ?`,
+            [estatus, calificacionFinal, periodoFinal, historialId],
+            (updateErr) => {
+              if (updateErr) {
+                console.error('Error actualizando historial academico:', updateErr)
+                return res.status(500).json(updateErr)
+              }
+              return res.json({ message: 'Avance de materia actualizado' })
+            }
+          )
+          return
+        }
+
+        db.query(
+          `INSERT INTO historial_academico (alumno_id, materia_id, calificacion, estatus, periodo)
+           VALUES (?, ?, ?, ?, ?)`,
+          [alumnoId, materiaId, calificacionFinal, estatus, periodoFinal],
+          (insertErr) => {
+            if (insertErr) {
+              console.error('Error insertando historial academico:', insertErr)
+              return res.status(500).json(insertErr)
+            }
+            return res.json({ message: 'Avance de materia actualizado' })
+          }
+        )
+      }
+    )
   })
 })
 

@@ -2,8 +2,10 @@ import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { UsuariosList } from "../components/UsuariosList"
 import { CarrerasList } from "../components/CarrerasList"
+import { PlanesBuilder } from "../components/PlanesBuilder"
 import { useAlumnosByCarrera, useMateriasByCarrera, useHorariosByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
 import * as coordinadorService from "../data/coordinadorService"
+import type { EstatusMateria } from "../data/coordinadorService"
 import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
 import { getMateriasAlumno } from "../data/materiasService"
 import type { Alumno } from "../types/Carrera"
@@ -17,6 +19,22 @@ interface CoordinadorInfo {
   carrera_id: number
   carrera_nombre: string
   rol: string
+}
+
+interface EdicionMateriaForm {
+  estatus: EstatusMateria
+  calificacion: string
+  periodo: string
+}
+
+const estatusCalificables: EstatusMateria[] = ["aprobada", "no_aprobada", "revalidar"]
+
+const etiquetasEstatus: Record<EstatusMateria, string> = {
+  aprobada: "Aprobada",
+  no_aprobada: "Reprobada",
+  no_cursada: "Por cursar",
+  revalidar: "Revalidada",
+  cursando: "Cursando",
 }
 
 export const CoordinadorDashboard = () => {
@@ -40,6 +58,7 @@ export const CoordinadorDashboard = () => {
   })
   // Estado para controlar qué sección se muestra
   const [seccionActual, setSeccionActual] = useState("inicio")
+  const [subseccionCarreras, setSubseccionCarreras] = useState<"carreras" | "planes">("carreras")
   // Estados para filtros de reportes
   const [filtroSemestre, setFiltroSemestre] = useState("todos")
   const [filtroPeriodo, setFiltroPeriodo] = useState("2024-2025")
@@ -48,6 +67,10 @@ export const CoordinadorDashboard = () => {
   const [materiasAlumnoDetalle, setMateriasAlumnoDetalle] = useState<Materia[]>([])
   const [cargandoDetalleAlumno, setCargandoDetalleAlumno] = useState(false)
   const [vistaDetalleAlumno, setVistaDetalleAlumno] = useState<"plan" | "kardex">("plan")
+  const [edicionesMateria, setEdicionesMateria] = useState<Record<number, EdicionMateriaForm>>({})
+  const [guardandoMateriaId, setGuardandoMateriaId] = useState<number | null>(null)
+  const [mensajeMateria, setMensajeMateria] = useState<string | null>(null)
+  const [errorMateria, setErrorMateria] = useState<string | null>(null)
 
   // Usar hooks de coordinador
   const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(
@@ -78,9 +101,27 @@ export const CoordinadorDashboard = () => {
         console.error("Error cargando detalle del alumno:", err)
         setDatosAlumnoDetalle(null)
         setMateriasAlumnoDetalle([])
+        setEdicionesMateria({})
       })
       .finally(() => setCargandoDetalleAlumno(false))
   }, [alumnoSeleccionado])
+
+  useEffect(() => {
+    const siguienteEdicion: Record<number, EdicionMateriaForm> = {}
+
+    materiasAlumnoDetalle.forEach((materia) => {
+      const estatus = (materia.estatus || "no_cursada") as EstatusMateria
+      siguienteEdicion[materia.id] = {
+        estatus,
+        calificacion: typeof materia.calificacion === "number" ? String(materia.calificacion) : "",
+        periodo: materia.periodo || "",
+      }
+    })
+
+    setEdicionesMateria(siguienteEdicion)
+    setMensajeMateria(null)
+    setErrorMateria(null)
+  }, [materiasAlumnoDetalle])
 
   // Función para logout
   const handleLogout = () => {
@@ -104,6 +145,72 @@ export const CoordinadorDashboard = () => {
     setSeccionActual("alumnos")
   }
 
+  const actualizarEdicionMateria = (
+    materiaId: number,
+    campo: keyof EdicionMateriaForm,
+    valor: string
+  ) => {
+    setEdicionesMateria((prev) => ({
+      ...prev,
+      [materiaId]: {
+        estatus: (prev[materiaId]?.estatus || "no_cursada") as EstatusMateria,
+        calificacion: prev[materiaId]?.calificacion || "",
+        periodo: prev[materiaId]?.periodo || "",
+        [campo]: valor,
+      },
+    }))
+  }
+
+  const guardarAvanceMateria = async (materia: Materia) => {
+    if (!usuario?.carrera_id || !alumnoSeleccionado) {
+      setErrorMateria("No se pudo identificar la carrera o alumno para guardar cambios.")
+      return
+    }
+
+    const edicion = edicionesMateria[materia.id]
+    const estatus = (edicion?.estatus || "no_cursada") as EstatusMateria
+    const requiereCalificacion = estatusCalificables.includes(estatus)
+    let calificacion: number | null = null
+
+    if (requiereCalificacion) {
+      const textoCalificacion = (edicion?.calificacion || "").trim()
+      if (!textoCalificacion) {
+        setErrorMateria(`La materia ${materia.codigo} requiere calificacion para el estatus seleccionado.`)
+        setMensajeMateria(null)
+        return
+      }
+
+      calificacion = Number(textoCalificacion)
+      if (Number.isNaN(calificacion) || calificacion < 0 || calificacion > 100) {
+        setErrorMateria(`La calificacion de ${materia.codigo} debe estar entre 0 y 100.`)
+        setMensajeMateria(null)
+        return
+      }
+    }
+
+    try {
+      setGuardandoMateriaId(materia.id)
+      setErrorMateria(null)
+      setMensajeMateria(null)
+
+      await coordinadorService.updateAvanceMateriaAlumno(usuario.carrera_id, alumnoSeleccionado.id, materia.id, {
+        estatus,
+        calificacion,
+        periodo: (edicion?.periodo || "").trim() || null,
+      })
+
+      const materiasActualizadas = await getMateriasAlumno(alumnoSeleccionado.id)
+      setMateriasAlumnoDetalle(materiasActualizadas)
+      setMensajeMateria(`Se actualizo ${materia.codigo} correctamente.`)
+    } catch (err) {
+      console.error("Error actualizando avance de materia:", err)
+      setErrorMateria(`No fue posible actualizar ${materia.codigo}.`)
+      setMensajeMateria(null)
+    } finally {
+      setGuardandoMateriaId(null)
+    }
+  }
+
   const totalCreditosPlan = materiasAlumnoDetalle.reduce((acc, materia) => acc + materia.creditos, 0)
   const creditosAprobados = materiasAlumnoDetalle
     .filter((materia) => materia.estatus === "aprobada" || materia.estatus === "revalidar")
@@ -118,6 +225,7 @@ export const CoordinadorDashboard = () => {
   }, {})
 
   const materiasCursadas = materiasAlumnoDetalle.filter((materia) => materia.estatus === "aprobada" || materia.estatus === "revalidar")
+  const materiasEnCurso = materiasAlumnoDetalle.filter((materia) => materia.estatus === "cursando")
   const materiasPorCursar = materiasAlumnoDetalle.filter((materia) => materia.estatus === "no_cursada")
   const materiasReprobadas = materiasAlumnoDetalle.filter((materia) => materia.estatus === "no_aprobada")
 
@@ -208,8 +316,26 @@ export const CoordinadorDashboard = () => {
         {seccionActual === "carreras" && (
           <div className={styles.seccion}>
             <h1>Gestión de Carreras</h1>
-            <p>Consulta todas las carreras, sus planes de estudio y los alumnos inscritos en cada una.</p>
-            <CarrerasList />
+            <p>Administra carreras y diseña planes de estudio por semestre desde un editor interactivo.</p>
+
+            <div className={styles.submenuTabs}>
+              <button
+                className={`${styles.submenuTabButton} ${subseccionCarreras === "carreras" ? styles.activeSubmenuTab : ""}`}
+                onClick={() => setSubseccionCarreras("carreras")}
+                type="button"
+              >
+                Carreras
+              </button>
+              <button
+                className={`${styles.submenuTabButton} ${subseccionCarreras === "planes" ? styles.activeSubmenuTab : ""}`}
+                onClick={() => setSubseccionCarreras("planes")}
+                type="button"
+              >
+                Planes Interactivos
+              </button>
+            </div>
+
+            {subseccionCarreras === "carreras" ? <CarrerasList /> : <PlanesBuilder />}
           </div>
         )}
 
@@ -259,6 +385,8 @@ export const CoordinadorDashboard = () => {
                 {vistaDetalleAlumno === "plan" && (
                   <div className={styles.detalleBloque}>
                     <h2>Plan de estudio y avance</h2>
+                    {mensajeMateria && <p className={styles.mensajeExito}>{mensajeMateria}</p>}
+                    {errorMateria && <p className={styles.mensajeError}>{errorMateria}</p>}
                     {Object.keys(materiasPorSemestre).length === 0 ? (
                       <p>No hay materias del plan para mostrar.</p>
                     ) : (
@@ -277,6 +405,68 @@ export const CoordinadorDashboard = () => {
                                   <span className={styles[`estatus_${materia.estatus}`] || styles.estatus_default}>
                                     {materia.estatus}
                                   </span>
+
+                                  <div className={styles.editorMateria}>
+                                    <label className={styles.editorLabel} htmlFor={`estatus-${materia.id}`}>
+                                      Estatus
+                                    </label>
+                                    <select
+                                      id={`estatus-${materia.id}`}
+                                      className={styles.editorSelect}
+                                      value={edicionesMateria[materia.id]?.estatus || "no_cursada"}
+                                      onChange={(e) => actualizarEdicionMateria(materia.id, "estatus", e.target.value)}
+                                    >
+                                      {Object.entries(etiquetasEstatus).map(([valor, etiqueta]) => (
+                                        <option key={valor} value={valor}>
+                                          {etiqueta}
+                                        </option>
+                                      ))}
+                                    </select>
+
+                                    <label className={styles.editorLabel} htmlFor={`periodo-${materia.id}`}>
+                                      Periodo
+                                    </label>
+                                    <input
+                                      id={`periodo-${materia.id}`}
+                                      className={styles.editorInput}
+                                      type="text"
+                                      placeholder="Ej: AGO-DIC 2026"
+                                      value={edicionesMateria[materia.id]?.periodo || ""}
+                                      onChange={(e) => actualizarEdicionMateria(materia.id, "periodo", e.target.value)}
+                                    />
+
+                                    {estatusCalificables.includes(
+                                      (edicionesMateria[materia.id]?.estatus || "no_cursada") as EstatusMateria
+                                    ) && (
+                                      <>
+                                        <label className={styles.editorLabel} htmlFor={`calificacion-${materia.id}`}>
+                                          Calificacion
+                                        </label>
+                                        <input
+                                          id={`calificacion-${materia.id}`}
+                                          className={styles.editorInput}
+                                          type="number"
+                                          min={0}
+                                          max={100}
+                                          step="0.01"
+                                          placeholder="0 - 100"
+                                          value={edicionesMateria[materia.id]?.calificacion || ""}
+                                          onChange={(e) => actualizarEdicionMateria(materia.id, "calificacion", e.target.value)}
+                                        />
+                                      </>
+                                    )}
+
+                                    <button
+                                      className={`${styles.boton} ${styles.botonGuardarMateria}`}
+                                      type="button"
+                                      disabled={guardandoMateriaId === materia.id}
+                                      onClick={() => {
+                                        guardarAvanceMateria(materia)
+                                      }}
+                                    >
+                                      {guardandoMateriaId === materia.id ? "Guardando..." : "Guardar cambios"}
+                                    </button>
+                                  </div>
                                 </article>
                               ))}
                             </div>
@@ -297,6 +487,16 @@ export const CoordinadorDashboard = () => {
                           <div key={m.id} className={styles.kardexItem}>
                             <strong>{m.codigo}</strong> - {m.nombre}
                             <span> ({m.creditos} cr){typeof m.calificacion === "number" ? ` - ${m.calificacion}` : ""}</span>
+                          </div>
+                        ))}
+                      </section>
+
+                      <section className={styles.kardexColumna}>
+                        <h3>En curso</h3>
+                        {materiasEnCurso.length === 0 ? <p>Sin materias en curso.</p> : materiasEnCurso.map((m) => (
+                          <div key={m.id} className={styles.kardexItem}>
+                            <strong>{m.codigo}</strong> - {m.nombre}
+                            <span> ({m.creditos} cr){m.periodo ? ` - ${m.periodo}` : ""}</span>
                           </div>
                         ))}
                       </section>

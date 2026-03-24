@@ -52,6 +52,14 @@ interface ReporteAprobacionItem {
   tasa_aprobacion: number | null
 }
 
+export type EstatusMateria = "aprobada" | "no_aprobada" | "no_cursada" | "revalidar" | "cursando"
+
+export interface ActualizarAvanceMateriaPayload {
+  estatus: EstatusMateria
+  calificacion?: number | null
+  periodo?: string | null
+}
+
 const API_URL = "http://localhost:3000/api"
 
 // Obtener alumnos de la carrera del coordinador
@@ -188,5 +196,29 @@ export const getReporteAprobacion = async (
   } catch (error) {
     console.error("Error en getReporteAprobacion:", error)
     return null
+  }
+}
+
+// Actualizar avance de una materia para un alumno de la carrera
+export const updateAvanceMateriaAlumno = async (
+  carreraId: number,
+  alumnoId: number,
+  materiaId: number,
+  payload: ActualizarAvanceMateriaPayload
+): Promise<void> => {
+  const response = await fetch(`${API_URL}/coordinador/alumnos/${alumnoId}/materias/${materiaId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      carrera_id: carreraId,
+      estatus: payload.estatus,
+      calificacion: payload.calificacion ?? null,
+      periodo: payload.periodo ?? null,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    throw new Error(errorData?.message || "No se pudo actualizar el avance de la materia")
   }
 }

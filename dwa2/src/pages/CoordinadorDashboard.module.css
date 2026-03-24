@@ -48,6 +48,40 @@
   margin-bottom: 20px;
 }
 
+/* Sub-menú de pestañas */
+.submenuTabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 18px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.submenuTabButton {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.submenuTabButton:hover {
+  background: rgba(255, 88, 0, 0.1);
+  color: var(--color-primary);
+}
+
+.activeSubmenuTab {
+  background: var(--color-primary);
+  color: white;
+}
+
 /* Contenedor de datos del usuario */
 .datosUsuario {
   background: var(--color-surface-muted);
@@ -261,6 +295,70 @@
   background: #f9fafb;
 }
 
+.editorMateria {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #d8dde6;
+  display: grid;
+  gap: 8px;
+}
+
+.editorLabel {
+  font-size: 12px;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.editorSelect,
+.editorInput {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: #fff;
+  color: #1f2937;
+}
+
+.editorSelect:focus,
+.editorInput:focus {
+  outline: none;
+  border-color: #ff5800;
+  box-shadow: 0 0 0 3px rgba(255, 88, 0, 0.15);
+}
+
+.botonGuardarMateria {
+  margin-top: 4px;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.botonGuardarMateria:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.mensajeExito,
+.mensajeError {
+  margin: 8px 0 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mensajeExito {
+  border: 1px solid #9dd4a9;
+  background: #e9f9ed;
+  color: #1f6b31;
+}
+
+.mensajeError {
+  border: 1px solid #f5aaaa;
+  background: #fff1f1;
+  color: #9f1d1d;
+}
+
 .materiaCodigo {
   margin: 0;
   font-weight: 700;
@@ -435,5 +533,9 @@
   .accionInline {
     margin-right: 0;
     margin-bottom: 6px;
+  }
+
+  .botonGuardarMateria {
+    width: 100%;
   }
 }

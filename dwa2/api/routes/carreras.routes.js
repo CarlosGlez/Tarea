@@ -133,6 +133,59 @@ router.get('/materias-catalogo', (_req, res) => {
   })
 })
 
+// POST /api/carreras/materias-catalogo - Crear nueva materia en el catalogo
+router.post('/materias-catalogo', (req, res) => {
+  const nombre = req.body?.nombre?.trim()
+  const tipo_bloque = req.body?.tipo_bloque?.trim()
+  const creditos = parseInt(req.body?.creditos, 10)
+  const modalidad = req.body?.modalidad?.trim() || 'Presencial'
+
+  if (!nombre || !tipo_bloque) {
+    return res.status(400).json({ message: 'Nombre y bloque son obligatorios' })
+  }
+
+  if (!Number.isInteger(creditos) || creditos < 1 || creditos > 20) {
+    return res.status(400).json({ message: 'Los creditos deben ser un numero entero entre 1 y 20' })
+  }
+
+  db.query('SELECT IFNULL(MAX(id), 0) AS lastId FROM materias', (countErr, countResult) => {
+    if (countErr) {
+      console.error('Error counting materias:', countErr)
+      return res.status(500).json({ message: 'No se pudo generar el codigo de la materia' })
+    }
+
+    const total = (countResult[0].lastId || 0) + 1
+    const bloquePrefix = tipo_bloque.replace(/\s+/g, '').substring(0, 3).toUpperCase()
+    const nombrePrefix = nombre.replace(/\s+/g, '').substring(0, 3).toUpperCase()
+    const codigo = `${bloquePrefix}${nombrePrefix}${String(total).padStart(3, '0')}`
+
+    db.query(
+      'INSERT INTO materias (codigo, nombre, creditos, tipo_bloque, modalidad) VALUES (?, ?, ?, ?, ?)',
+      [codigo, nombre, creditos, tipo_bloque, modalidad],
+      (err, result) => {
+        if (err) {
+          console.error('Error in POST /api/carreras/materias-catalogo:', err)
+
+          if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: 'Ya existe una materia con ese codigo' })
+          }
+
+          return res.status(500).json({ message: 'No se pudo crear la materia' })
+        }
+
+        return res.status(201).json({
+          id: result.insertId,
+          codigo,
+          nombre,
+          creditos,
+          tipo_bloque,
+          modalidad,
+        })
+      }
+    )
+  })
+})
+
 // GET /api/carreras/:carreraId/planes - Obtener planes de una carrera
 router.get('/:carreraId/planes', (req, res) => {
   const carreraId = parsePositiveInt(req.params.carreraId)

@@ -33,6 +33,13 @@ export interface SavePlanMateriasPayload {
   }>
 }
 
+export interface CreateMateriaPayload {
+  nombre: string
+  tipo_bloque: string
+  creditos: number
+  modalidad?: string
+}
+
 const parseCarreraError = async (response: Response) => {
   const errorData = await response.json().catch(() => null)
   throw new Error(errorData?.message || "No se pudo completar la operación con la carrera")
@@ -148,6 +155,22 @@ export const savePlanMaterias = async (planId: number, payload: SavePlanMaterias
   if (!response.ok) {
     await parseCarreraError(response)
   }
+}
+
+export const createMateria = async (payload: CreateMateriaPayload): Promise<MateriaCatalogo> => {
+  const response = await fetch(`${API_URL}/carreras/materias-catalogo`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    await parseCarreraError(response)
+  }
+
+  return await response.json()
 }
 
 export const getAlumnosByCarrera = async (carreraId: number): Promise<Alumno[]> => {
