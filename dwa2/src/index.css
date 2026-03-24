@@ -153,7 +153,7 @@ td {
 }
 
 tbody tr:hover {
-  background: #fcfcfd;
+  background: var(--color-surface-muted);
 }
 
 tbody tr:last-child td {
@@ -182,14 +182,19 @@ tbody tr:last-child td {
 
 .ui-skeleton {
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, #eceff3 20%, #f5f7fa 50%, #eceff3 80%);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 20%,
+    var(--color-surface) 50%,
+    var(--color-surface-muted) 80%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.2s infinite linear;
 }
 
 .ui-empty {
-  border: 1px dashed #d7dbe3;
-  background: #fafbfe;
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface-muted);
   border-radius: var(--radius-md);
   padding: 16px;
   color: var(--color-text-muted);
