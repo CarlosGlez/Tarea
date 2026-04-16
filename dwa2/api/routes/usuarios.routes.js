@@ -113,10 +113,152 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const { id } = req.params
-  db.query('DELETE FROM usuarios WHERE id = ?', [id], (err, result) => {
-    if (err) return res.status(500).json(err)
-    res.json({ message: 'Usuario eliminado' })
+  db.getConnection((connectionErr, connection) => {
+    if (connectionErr) return res.status(500).json(connectionErr)
+
+    connection.beginTransaction((txErr) => {
+      if (txErr) {
+        connection.release()
+        return res.status(500).json(txErr)
+      }
+
+      const rollback = (error) => {
+        connection.rollback(() => {
+          connection.release()
+          return res.status(500).json(error)
+        })
+      }
+
+      connection.query('DELETE FROM historial_academico WHERE alumno_id = ?', [id], (err) => {
+        if (err) return rollback(err)
+
+        connection.query('DELETE FROM enrolamiento WHERE alumno_id = ?', [id], (err2) => {
+          if (err2) return rollback(err2)
+
+          connection.query('DELETE FROM alumno_carrera WHERE alumno_id = ?', [id], (err3) => {
+            if (err3) return rollback(err3)
+
+            connection.query('DELETE FROM alumnos WHERE id_alumno = ?', [id], (err4) => {
+              if (err4) return rollback(err4)
+
+              connection.query('DELETE FROM coordinador_carrera WHERE coordinador_id = ?', [id], (err5) => {
+                if (err5) return rollback(err5)
+
+                connection.query('DELETE FROM coordinadores WHERE id_coordinador = ?', [id], (err6) => {
+                  if (err6) return rollback(err6)
+
+                  connection.query('DELETE FROM usuarios WHERE id = ?', [id], (err7) => {
+                    if (err7) return rollback(err7)
+
+                    connection.commit((commitErr) => {
+                      if (commitErr) return rollback(commitErr)
+                      connection.release()
+                      return res.json({ message: 'Usuario eliminado' })
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    })
   })
+})
+
+// Actualizar carrera/plan de un alumno
+router.put('/:id/alumno-programa', (req, res) => {
+  const { id } = req.params
+  const { carrera_id, plan_id } = req.body
+
+  if (!carrera_id || !plan_id) {
+    return res.status(400).json({ message: 'carrera_id y plan_id son requeridos' })
+  }
+
+  db.query(
+    `SELECT id FROM planes_estudio WHERE id = ? AND carrera_id = ?`,
+    [plan_id, carrera_id],
+    (planErr, planRows) => {
+      if (planErr) return res.status(500).json(planErr)
+      if (!planRows || planRows.length === 0) {
+        return res.status(400).json({ message: 'El plan no pertenece a la carrera seleccionada' })
+      }
+
+      db.getConnection((connectionErr, connection) => {
+        if (connectionErr) return res.status(500).json(connectionErr)
+
+        connection.beginTransaction((txErr) => {
+          if (txErr) {
+            connection.release()
+            return res.status(500).json(txErr)
+          }
+
+          const rollback = (error) => {
+            connection.rollback(() => {
+              connection.release()
+              return res.status(500).json(error)
+            })
+          }
+
+          connection.query('SELECT id_alumno FROM alumnos WHERE id_alumno = ?', [id], (alumnoErr, alumnoRows) => {
+            if (alumnoErr) return rollback(alumnoErr)
+            if (!alumnoRows || alumnoRows.length === 0) {
+              connection.rollback(() => {
+                connection.release()
+                return res.status(404).json({ message: 'Alumno no encontrado' })
+              })
+              return
+            }
+
+            connection.query('UPDATE alumnos SET plan_id = ? WHERE id_alumno = ?', [plan_id, id], (updateAlumnoErr) => {
+              if (updateAlumnoErr) return rollback(updateAlumnoErr)
+
+              connection.query('UPDATE alumno_carrera SET activo = 0 WHERE alumno_id = ?', [id], (deactivateErr) => {
+                if (deactivateErr) return rollback(deactivateErr)
+
+                connection.query(
+                  'SELECT id FROM alumno_carrera WHERE alumno_id = ? AND carrera_id = ? LIMIT 1',
+                  [id, carrera_id],
+                  (existsErr, existsRows) => {
+                    if (existsErr) return rollback(existsErr)
+
+                    const finish = () => {
+                      connection.commit((commitErr) => {
+                        if (commitErr) return rollback(commitErr)
+                        connection.release()
+                        return res.json({ message: 'Programa del alumno actualizado' })
+                      })
+                    }
+
+                    if (existsRows.length > 0) {
+                      connection.query(
+                        'UPDATE alumno_carrera SET activo = 1 WHERE id = ?',
+                        [existsRows[0].id],
+                        (reactivateErr) => {
+                          if (reactivateErr) return rollback(reactivateErr)
+                          finish()
+                        }
+                      )
+                      return
+                    }
+
+                    connection.query(
+                      'INSERT INTO alumno_carrera (alumno_id, carrera_id, activo) VALUES (?, ?, 1)',
+                      [id, carrera_id],
+                      (insertErr) => {
+                        if (insertErr) return rollback(insertErr)
+                        finish()
+                      }
+                    )
+                  }
+                )
+              })
+            })
+          })
+        })
+      })
+    }
+  )
 })
 
 // Obtener datos personales del alumno

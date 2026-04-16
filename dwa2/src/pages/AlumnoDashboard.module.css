@@ -129,17 +129,44 @@
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
+    height: auto;
   }
 
   .contenido {
-    padding: 20px;
+    flex: 1;
+    height: auto;
+    padding: 24px 16px;
+    min-height: calc(100vh - 200px);
   }
 
   .seccion h1 {
     font-size: 24px;
   }
 
+  .seccion h2 {
+    font-size: 20px;
+  }
+
   .resumenGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .contenido {
+    padding: 16px;
+    min-height: calc(100vh - 150px);
+  }
+
+  .seccion {
+    padding: 16px;
+  }
+
+  .seccion h1 {
+    font-size: 20px;
+  }
+
+  .seccion h2 {
+    font-size: 16px;
   }
 }

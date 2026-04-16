@@ -3,6 +3,7 @@ import { Sidebar } from "../components/Sidebar"
 import { UsuariosList } from "../components/UsuariosList"
 import { CarrerasList } from "../components/CarrerasList"
 import { PlanesBuilder } from "../components/PlanesBuilder"
+import { StudyPlanProgress } from "../components/StudyPlanProgress"
 import { useAlumnosByCarrera, useMateriasByCarrera, useHorariosByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
 import * as coordinadorService from "../data/coordinadorService"
 import type { EstatusMateria } from "../data/coordinadorService"
@@ -73,9 +74,7 @@ export const CoordinadorDashboard = () => {
   const [errorMateria, setErrorMateria] = useState<string | null>(null)
 
   // Usar hooks de coordinador
-  const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(
-    usuario?.carrera_id || null
-  )
+  const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(null)
   const { materias, cargando: cargandoMaterias } = useMateriasByCarrera(
     usuario?.carrera_id || null
   )
@@ -211,19 +210,6 @@ export const CoordinadorDashboard = () => {
     }
   }
 
-  const totalCreditosPlan = materiasAlumnoDetalle.reduce((acc, materia) => acc + materia.creditos, 0)
-  const creditosAprobados = materiasAlumnoDetalle
-    .filter((materia) => materia.estatus === "aprobada" || materia.estatus === "revalidar")
-    .reduce((acc, materia) => acc + materia.creditos, 0)
-  const porcentajeAvance = totalCreditosPlan > 0 ? Math.round((creditosAprobados / totalCreditosPlan) * 100) : 0
-
-  const materiasPorSemestre = materiasAlumnoDetalle.reduce<Record<number, Materia[]>>((acc, materia) => {
-    const semestre = materia.semestre || 0
-    if (!acc[semestre]) acc[semestre] = []
-    acc[semestre].push(materia)
-    return acc
-  }, {})
-
   const materiasCursadas = materiasAlumnoDetalle.filter((materia) => materia.estatus === "aprobada" || materia.estatus === "revalidar")
   const materiasEnCurso = materiasAlumnoDetalle.filter((materia) => materia.estatus === "cursando")
   const materiasPorCursar = materiasAlumnoDetalle.filter((materia) => materia.estatus === "no_cursada")
@@ -232,7 +218,7 @@ export const CoordinadorDashboard = () => {
   // Elementos del menú de la sidebar
   const menuItems = [
     { label: "Inicio", icon: "fa-home", onClick: () => setSeccionActual("inicio") },
-    { label: "Alumnos de mi carrera", icon: "fa-users", onClick: () => setSeccionActual("alumnos") },
+    { label: "Alumnos", icon: "fa-users", onClick: () => setSeccionActual("alumnos") },
     { label: "Gestión de Carreras", icon: "fa-graduation-cap", onClick: () => setSeccionActual("carreras") },
     { label: "Materias", icon: "fa-book", onClick: () => setSeccionActual("materias") },
     { label: "Horarios", icon: "fa-calendar", onClick: () => setSeccionActual("horarios") },
@@ -290,8 +276,8 @@ export const CoordinadorDashboard = () => {
         {/* Sección de Gestión de Alumnos */}
         {seccionActual === "alumnos" && (
           <div className={styles.seccion}>
-            <h1>Alumnos de mi carrera</h1>
-            <p>Visualiza y gestiona los alumnos inscritos en <strong>{usuario?.carrera_nombre}</strong>.</p>
+            <h1>Alumnos</h1>
+            <p>Visualiza y gestiona los alumnos de todas las carreras.</p>
             
             {cargandoAlumnos ? (
               <div className={styles.skeletonRows}>
@@ -304,10 +290,11 @@ export const CoordinadorDashboard = () => {
                 carreraId={usuario?.carrera_id} 
                 alumnosFiltrados={alumnos}
                 onAlumnoCreated={refetchAlumnos}
+                onAlumnosChanged={refetchAlumnos}
                 onVerDetalleAlumno={abrirDetalleAlumno}
               />
             ) : (
-              <p className={styles.emptyState}>No hay alumnos registrados en esta carrera.</p>
+              <p className={styles.emptyState}>No hay alumnos registrados.</p>
             )}
           </div>
         )}
@@ -335,7 +322,11 @@ export const CoordinadorDashboard = () => {
               </button>
             </div>
 
-            {subseccionCarreras === "carreras" ? <CarrerasList /> : <PlanesBuilder />}
+            {subseccionCarreras === "carreras" ? (
+              <CarrerasList soloLectura />
+            ) : (
+              <PlanesBuilder carreraFijaId={usuario?.carrera_id || null} />
+            )}
           </div>
         )}
 
@@ -354,125 +345,102 @@ export const CoordinadorDashboard = () => {
               </div>
             ) : datosAlumnoDetalle ? (
               <>
-                <div className={styles.alumnoResumenCard}>
-                  <h2>{`${datosAlumnoDetalle.nombre || ""} ${datosAlumnoDetalle.apellido || ""}`.trim() || datosAlumnoDetalle.nombre_usuario}</h2>
-                  <p><strong>ID:</strong> {datosAlumnoDetalle.id}</p>
-                  <p><strong>Carrera:</strong> {datosAlumnoDetalle.carrera_nombre || "No especificada"}</p>
-                  <p><strong>Plan:</strong> {datosAlumnoDetalle.plan_estudios || "No especificado"}</p>
-                  <p><strong>Creditos cursados:</strong> {creditosAprobados} / {totalCreditosPlan}</p>
-
-                  <div className={styles.progresoTrack}>
-                    <div className={styles.progresoFill} style={{ width: `${porcentajeAvance}%` }} />
-                  </div>
-                  <p className={styles.progresoTexto}>{porcentajeAvance}% de avance</p>
-
-                  <div className={styles.botonesDetalle}>
-                    <button
-                      className={styles.boton}
-                      onClick={() => setVistaDetalleAlumno("plan")}
-                    >
-                      Ver plan de estudio
-                    </button>
-                    <button
-                      className={styles.boton}
-                      onClick={() => setVistaDetalleAlumno("kardex")}
-                    >
-                      Ver kardex
-                    </button>
-                  </div>
+                <div className={styles.botonesDetalle}>
+                  <button
+                    className={styles.boton}
+                    onClick={() => setVistaDetalleAlumno("plan")}
+                  >
+                    Ver plan de estudio
+                  </button>
+                  <button
+                    className={styles.boton}
+                    onClick={() => setVistaDetalleAlumno("kardex")}
+                  >
+                    Ver kardex
+                  </button>
                 </div>
 
                 {vistaDetalleAlumno === "plan" && (
                   <div className={styles.detalleBloque}>
-                    <h2>Plan de estudio y avance</h2>
                     {mensajeMateria && <p className={styles.mensajeExito}>{mensajeMateria}</p>}
                     {errorMateria && <p className={styles.mensajeError}>{errorMateria}</p>}
-                    {Object.keys(materiasPorSemestre).length === 0 ? (
-                      <p>No hay materias del plan para mostrar.</p>
-                    ) : (
-                      Object.keys(materiasPorSemestre)
-                        .map(Number)
-                        .sort((a, b) => a - b)
-                        .map((semestre) => (
-                          <div key={semestre} className={styles.semestreBloque}>
-                            <h3>Semestre {semestre}</h3>
-                            <div className={styles.listaMateriasPlan}>
-                              {materiasPorSemestre[semestre].map((materia) => (
-                                <article key={materia.id} className={styles.materiaPlanCard}>
-                                  <p className={styles.materiaCodigo}>{materia.codigo}</p>
-                                  <p className={styles.materiaNombre}>{materia.nombre}</p>
-                                  <p className={styles.materiaMeta}>{materia.creditos} creditos</p>
-                                  <span className={styles[`estatus_${materia.estatus}`] || styles.estatus_default}>
-                                    {materia.estatus}
-                                  </span>
+                    <StudyPlanProgress
+                      materias={materiasAlumnoDetalle}
+                      title="Plan de estudio y avance"
+                      subtitle="Actualiza el estatus de cada materia directamente desde esta vista."
+                      student={{
+                        nombre: `${datosAlumnoDetalle.nombre || ""} ${datosAlumnoDetalle.apellido || ""}`.trim() || datosAlumnoDetalle.nombre_usuario,
+                        identificador: datosAlumnoDetalle.matricula || datosAlumnoDetalle.id,
+                        carrera: datosAlumnoDetalle.carrera_nombre || "No especificada",
+                        plan: datosAlumnoDetalle.plan_estudios || "No especificado",
+                        estatus: datosAlumnoDetalle.estatus_academico || "No especificado",
+                        avatarUrl: datosAlumnoDetalle.imagen_url || null,
+                      }}
+                      emptyMessage="No hay materias del plan para mostrar."
+                      renderMateriaActions={(materia) => (
+                        <div className={styles.editorMateria}>
+                          <label className={styles.editorLabel} htmlFor={`estatus-${materia.id}`}>
+                            Estatus
+                          </label>
+                          <select
+                            id={`estatus-${materia.id}`}
+                            className={styles.editorSelect}
+                            value={edicionesMateria[materia.id]?.estatus || "no_cursada"}
+                            onChange={(e) => actualizarEdicionMateria(materia.id, "estatus", e.target.value)}
+                          >
+                            {Object.entries(etiquetasEstatus).map(([valor, etiqueta]) => (
+                              <option key={valor} value={valor}>
+                                {etiqueta}
+                              </option>
+                            ))}
+                          </select>
 
-                                  <div className={styles.editorMateria}>
-                                    <label className={styles.editorLabel} htmlFor={`estatus-${materia.id}`}>
-                                      Estatus
-                                    </label>
-                                    <select
-                                      id={`estatus-${materia.id}`}
-                                      className={styles.editorSelect}
-                                      value={edicionesMateria[materia.id]?.estatus || "no_cursada"}
-                                      onChange={(e) => actualizarEdicionMateria(materia.id, "estatus", e.target.value)}
-                                    >
-                                      {Object.entries(etiquetasEstatus).map(([valor, etiqueta]) => (
-                                        <option key={valor} value={valor}>
-                                          {etiqueta}
-                                        </option>
-                                      ))}
-                                    </select>
+                          <label className={styles.editorLabel} htmlFor={`periodo-${materia.id}`}>
+                            Periodo
+                          </label>
+                          <input
+                            id={`periodo-${materia.id}`}
+                            className={styles.editorInput}
+                            type="text"
+                            placeholder="Ej: AGO-DIC 2026"
+                            value={edicionesMateria[materia.id]?.periodo || ""}
+                            onChange={(e) => actualizarEdicionMateria(materia.id, "periodo", e.target.value)}
+                          />
 
-                                    <label className={styles.editorLabel} htmlFor={`periodo-${materia.id}`}>
-                                      Periodo
-                                    </label>
-                                    <input
-                                      id={`periodo-${materia.id}`}
-                                      className={styles.editorInput}
-                                      type="text"
-                                      placeholder="Ej: AGO-DIC 2026"
-                                      value={edicionesMateria[materia.id]?.periodo || ""}
-                                      onChange={(e) => actualizarEdicionMateria(materia.id, "periodo", e.target.value)}
-                                    />
+                          {estatusCalificables.includes(
+                            (edicionesMateria[materia.id]?.estatus || "no_cursada") as EstatusMateria
+                          ) && (
+                            <>
+                              <label className={styles.editorLabel} htmlFor={`calificacion-${materia.id}`}>
+                                Calificacion
+                              </label>
+                              <input
+                                id={`calificacion-${materia.id}`}
+                                className={styles.editorInput}
+                                type="number"
+                                min={0}
+                                max={100}
+                                step="0.01"
+                                placeholder="0 - 100"
+                                value={edicionesMateria[materia.id]?.calificacion || ""}
+                                onChange={(e) => actualizarEdicionMateria(materia.id, "calificacion", e.target.value)}
+                              />
+                            </>
+                          )}
 
-                                    {estatusCalificables.includes(
-                                      (edicionesMateria[materia.id]?.estatus || "no_cursada") as EstatusMateria
-                                    ) && (
-                                      <>
-                                        <label className={styles.editorLabel} htmlFor={`calificacion-${materia.id}`}>
-                                          Calificacion
-                                        </label>
-                                        <input
-                                          id={`calificacion-${materia.id}`}
-                                          className={styles.editorInput}
-                                          type="number"
-                                          min={0}
-                                          max={100}
-                                          step="0.01"
-                                          placeholder="0 - 100"
-                                          value={edicionesMateria[materia.id]?.calificacion || ""}
-                                          onChange={(e) => actualizarEdicionMateria(materia.id, "calificacion", e.target.value)}
-                                        />
-                                      </>
-                                    )}
-
-                                    <button
-                                      className={`${styles.boton} ${styles.botonGuardarMateria}`}
-                                      type="button"
-                                      disabled={guardandoMateriaId === materia.id}
-                                      onClick={() => {
-                                        guardarAvanceMateria(materia)
-                                      }}
-                                    >
-                                      {guardandoMateriaId === materia.id ? "Guardando..." : "Guardar cambios"}
-                                    </button>
-                                  </div>
-                                </article>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                    )}
+                          <button
+                            className={`${styles.boton} ${styles.botonGuardarMateria}`}
+                            type="button"
+                            disabled={guardandoMateriaId === materia.id}
+                            onClick={() => {
+                              guardarAvanceMateria(materia)
+                            }}
+                          >
+                            {guardandoMateriaId === materia.id ? "Guardando..." : "Guardar cambios"}
+                          </button>
+                        </div>
+                      )}
+                    />
                   </div>
                 )}
 

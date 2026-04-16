@@ -414,10 +414,14 @@
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
+    height: auto;
   }
 
   .contenido {
-    padding: 20px;
+    flex: 1;
+    height: auto;
+    padding: 24px 16px;
+    min-height: calc(100vh - 200px);
   }
 
   .seccion h1 {
@@ -448,12 +452,35 @@
   }
 
   .usuariosTable {
-    font-size: 13px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .contenido {
+    padding: 16px;
+    min-height: calc(100vh - 150px);
+  }
+
+  .seccion {
+    padding: 16px;
+  }
+
+  .seccion h1 {
+    font-size: 20px;
+  }
+
+  .seccion h2 {
+    font-size: 16px;
+  }
+
+  .usuariosTable {
+    font-size: 11px;
   }
 
   .usuariosTable th,
   .usuariosTable td {
-    padding: 10px 8px;
+    padding: 8px 6px;
   }
 
   .tableActions {

@@ -41,7 +41,7 @@ export const useAuth = () => {
     }
   }
 
-  const register = async (nombre_completo: string, correo: string, password: string, escuela_procedencia: string) => {
+  const register = async (nombre_completo: string, correo: string, password: string, escuela_procedencia: string, carrera_id?: number, plan_id?: number) => {
     setLoading(true)
 
     try {
@@ -49,7 +49,9 @@ export const useAuth = () => {
         nombre_completo,
         correo,
         password,
-        escuela_procedencia
+        escuela_procedencia,
+        carrera_id,
+        plan_id
       })
     } finally {
       setLoading(false)

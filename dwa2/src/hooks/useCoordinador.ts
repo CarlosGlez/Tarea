@@ -29,11 +29,6 @@ export const useAlumnosByCarrera = (carreraId: number | null) => {
   const [error, setError] = useState<string | null>(null)
 
   const cargarAlumnos = useCallback(async () => {
-    if (!carreraId) {
-      setAlumnos([])
-      setCargando(false)
-      return
-    }
     try {
       setCargando(true)
       const datos = await coordinadorService.getAlumnosByCarrera(carreraId)

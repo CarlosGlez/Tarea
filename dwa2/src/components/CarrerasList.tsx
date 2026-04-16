@@ -4,7 +4,11 @@ import { useCarreras, usePlanesByCarrera, useAlumnosByCarrera } from "../hooks/u
 import type { Carrera } from "../types/Carrera"
 import styles from "./CarrerasList.module.css"
 
-export const CarrerasList = () => {
+interface CarrerasListProps {
+  soloLectura?: boolean
+}
+
+export const CarrerasList = ({ soloLectura = false }: CarrerasListProps) => {
   const { carreras, loading, error, refetchCarreras } = useCarreras()
   const [selectedCarrera, setSelectedCarrera] = useState<Carrera | null>(null)
   const [editingCarrera, setEditingCarrera] = useState<Carrera | null>(null)
@@ -99,51 +103,56 @@ export const CarrerasList = () => {
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Carreras</h2>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.formHeader}>
-          <h3>{editingCarrera ? "Editar carrera" : "Crear carrera"}</h3>
-          {editingCarrera && (
-            <button type="button" className={styles.secondaryButton} onClick={handleCancelEdit}>
-              Cancelar edición
+      {!soloLectura && (
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.formHeader}>
+            <h3>{editingCarrera ? "Editar carrera" : "Crear carrera"}</h3>
+            {editingCarrera && (
+              <button type="button" className={styles.secondaryButton} onClick={handleCancelEdit}>
+                Cancelar edición
+              </button>
+            )}
+          </div>
+
+          <div className={styles.formGrid}>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="nombre">Nombre</label>
+              <input
+                id="nombre"
+                type="text"
+                value={formData.nombre}
+                onChange={(event) => setFormData((current) => ({ ...current, nombre: event.target.value }))}
+                placeholder="Ej. Ingeniería en Sistemas"
+                required
+              />
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label htmlFor="abreviatura">Abreviatura</label>
+              <input
+                id="abreviatura"
+                type="text"
+                value={formData.abreviatura}
+                onChange={(event) => setFormData((current) => ({ ...current, abreviatura: event.target.value.toUpperCase() }))}
+                placeholder="Ej. ISND"
+                maxLength={10}
+                required
+              />
+            </div>
+          </div>
+
+          <div className={styles.formActions}>
+            <button type="submit" className={styles.createButton} disabled={submitting}>
+              {submitting ? (editingCarrera ? "Guardando..." : "Creando...") : (editingCarrera ? "Guardar cambios" : "Crear carrera")}
             </button>
-          )}
-        </div>
-
-        <div className={styles.formGrid}>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="nombre">Nombre</label>
-            <input
-              id="nombre"
-              type="text"
-              value={formData.nombre}
-              onChange={(event) => setFormData((current) => ({ ...current, nombre: event.target.value }))}
-              placeholder="Ej. Ingeniería en Sistemas"
-              required
-            />
+            {formError && <p className={styles.errorMessage}>{formError}</p>}
+            {formSuccess && <p className={styles.successMessage}>{formSuccess}</p>}
           </div>
+        </form>
+      )}
 
-          <div className={styles.fieldGroup}>
-            <label htmlFor="abreviatura">Abreviatura</label>
-            <input
-              id="abreviatura"
-              type="text"
-              value={formData.abreviatura}
-              onChange={(event) => setFormData((current) => ({ ...current, abreviatura: event.target.value.toUpperCase() }))}
-              placeholder="Ej. ISND"
-              maxLength={10}
-              required
-            />
-          </div>
-        </div>
-
-        <div className={styles.formActions}>
-          <button type="submit" className={styles.createButton} disabled={submitting}>
-            {submitting ? (editingCarrera ? "Guardando..." : "Creando...") : (editingCarrera ? "Guardar cambios" : "Crear carrera")}
-          </button>
-          {formError && <p className={styles.errorMessage}>{formError}</p>}
-          {formSuccess && <p className={styles.successMessage}>{formSuccess}</p>}
-        </div>
-      </form>
+      {soloLectura && formSuccess && <p className={styles.successMessage}>{formSuccess}</p>}
+      {soloLectura && formError && <p className={styles.errorMessage}>{formError}</p>}
 
       {carreras.length === 0 ? (
         <p className={styles.statusMessage}>No hay carreras disponibles.</p>
@@ -176,12 +185,16 @@ export const CarrerasList = () => {
                         >
                           {isSelected ? "Ocultar detalle" : "Ver detalle"}
                         </button>
-                        <button type="button" className={styles.editButton} onClick={() => handleEdit(carrera)}>
-                          Editar
-                        </button>
-                        <button type="button" className={styles.deleteButton} onClick={() => handleDelete(carrera)}>
-                          Eliminar
-                        </button>
+                        {!soloLectura && (
+                          <button type="button" className={styles.editButton} onClick={() => handleEdit(carrera)}>
+                            Editar
+                          </button>
+                        )}
+                        {!soloLectura && (
+                          <button type="button" className={styles.deleteButton} onClick={() => handleDelete(carrera)}>
+                            Eliminar
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

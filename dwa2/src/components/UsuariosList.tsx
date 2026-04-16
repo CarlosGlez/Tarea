@@ -3,7 +3,13 @@ import { useUsuarios } from "../hooks/useUsuarios"
 import type { Usuario } from "../types/Usuario"
 import type { Alumno, Carrera, PlanEstudio } from "../types/Carrera"
 import styles from "../pages/AdminDashboard.module.css"
-import { getAlumnoDatos, updateAlumnoDatos, getCoordinadorDatos, updateCoordinadorDatos } from "../data/usuariosService"
+import {
+  getAlumnoDatos,
+  updateAlumnoDatos,
+  getCoordinadorDatos,
+  updateCoordinadorDatos,
+  updateAlumnoPrograma,
+} from "../data/usuariosService"
 import * as carrerasService from "../data/carrerasService"
 
 interface UsuariosListProps {
@@ -11,10 +17,18 @@ interface UsuariosListProps {
   alumnosFiltrados?: Alumno[]
   soloVisualizacion?: boolean
   onAlumnoCreated?: () => void
+  onAlumnosChanged?: () => void
   onVerDetalleAlumno?: (alumno: Alumno) => void
 }
 
-export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = false, onAlumnoCreated, onVerDetalleAlumno }: UsuariosListProps) => {
+export const UsuariosList = ({
+  carreraId,
+  alumnosFiltrados,
+  soloVisualizacion = false,
+  onAlumnoCreated,
+  onAlumnosChanged,
+  onVerDetalleAlumno,
+}: UsuariosListProps) => {
   const { usuarios, loading, addUsuario, editUsuario, removeUsuario } = useUsuarios()
   const [carreras, setCarreras] = useState<Carrera[]>([])
   const [planes, setPlanes] = useState<PlanEstudio[]>([])
@@ -24,8 +38,10 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
   const usuariosAMostrar = alumnosFiltrados && carreraId ? alumnosFiltrados : usuarios
   const [modalOpen, setModalOpen] = useState(false)
   const [datosPersonalesOpen, setDatosPersonalesOpen] = useState(false)
+  const [programaOpen, setProgramaOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<Usuario | null>(null)
   const [loadingDatos, setLoadingDatos] = useState(false)
+  const [guardandoPrograma, setGuardandoPrograma] = useState(false)
   const [formData, setFormData] = useState({
     nombre_usuario: '',
     correo: '',
@@ -35,6 +51,10 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
     plan_id: ''
   })
   const [datosPersonalesForm, setDatosPersonalesForm] = useState<Record<string, string | number | undefined>>({})
+  const [programaForm, setProgramaForm] = useState({
+    carrera_id: "",
+    plan_id: "",
+  })
   
   // Cargar carreras al montar
   useEffect(() => {
@@ -106,6 +126,10 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
   }
 
   const handleEdit = (user: Usuario | Alumno) => {
+    const alumnoEdit = user as Alumno
+    const carreraActual = alumnoEdit.carrera_id ? String(alumnoEdit.carrera_id) : (carreraId ? String(carreraId) : "")
+    const planActual = alumnoEdit.plan_id ? String(alumnoEdit.plan_id) : ""
+
     setEditingUser(user as Usuario)
     setFormData({
       nombre_usuario: user.nombre_usuario,
@@ -114,6 +138,10 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
       rol: user.rol,
       carrera_id: '',
       plan_id: ''
+    })
+    setProgramaForm({
+      carrera_id: carreraActual,
+      plan_id: planActual,
     })
     setModalOpen(true)
   }
@@ -133,7 +161,13 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
 
   const handleDelete = async (id: number) => {
     if (confirm('¿Estás seguro de eliminar este usuario?')) {
-      await removeUsuario(id)
+      try {
+        await removeUsuario(id)
+        onAlumnosChanged?.()
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'No se pudo eliminar el usuario'
+        alert(errorMessage)
+      }
     }
   }
 
@@ -146,6 +180,55 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
   const closeDatosPersonalesModal = () => {
     setDatosPersonalesOpen(false)
     setDatosPersonalesForm({})
+  }
+
+  const closeProgramaModal = () => {
+    setProgramaOpen(false)
+    setProgramaForm({ carrera_id: '', plan_id: '' })
+  }
+
+  const handleOpenProgramaModal = async () => {
+    if (!editingUser || editingUser.rol !== 'alumno') return
+
+    const carreraActual = programaForm.carrera_id || (carreraId ? String(carreraId) : '')
+    if (carreraActual) {
+      try {
+        const planesCarrera = await carrerasService.getPlanesByCarrera(parseInt(carreraActual, 10))
+        setPlanes(planesCarrera)
+      } catch (error) {
+        console.error('Error cargando planes para programa:', error)
+      }
+    }
+
+    setProgramaOpen(true)
+    setModalOpen(false)
+  }
+
+  const handleSavePrograma = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser || editingUser.rol !== 'alumno') return
+
+    if (!programaForm.carrera_id || !programaForm.plan_id) {
+      alert('Debes seleccionar carrera y plan')
+      return
+    }
+
+    try {
+      setGuardandoPrograma(true)
+      await updateAlumnoPrograma(editingUser.id, {
+        carrera_id: parseInt(programaForm.carrera_id, 10),
+        plan_id: parseInt(programaForm.plan_id, 10),
+      })
+      alert('Carrera y plan actualizados exitosamente')
+      onAlumnosChanged?.()
+      closeProgramaModal()
+    } catch (error) {
+      console.error('Error actualizando programa del alumno:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      alert(`Error al actualizar carrera/plan: ${errorMessage}`)
+    } finally {
+      setGuardandoPrograma(false)
+    }
   }
 
   const handleOpenDatosPersonales = async () => {
@@ -364,10 +447,110 @@ export const UsuariosList = ({ carreraId, alumnosFiltrados, soloVisualizacion = 
                     <i className="fas fa-user-edit"></i> Datos Personales
                   </button>
                 )}
+                {editingUser?.rol === 'alumno' && (
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.warning}`}
+                    onClick={handleOpenProgramaModal}
+                  >
+                    <i className="fas fa-graduation-cap"></i> Carrera y Plan
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`${styles.btn} ${styles.secondary}`}
                   onClick={closeModal}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para cambiar carrera/plan del alumno */}
+      {programaOpen && editingUser?.rol === 'alumno' && (
+        <div className={styles.modalOverlay} onClick={closeProgramaModal}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Cambiar Carrera y Plan</h2>
+              <button className={styles.closeButton} onClick={closeProgramaModal}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePrograma}>
+              <div className={styles.formGroup}>
+                <label htmlFor="programa_carrera_id">Carrera:</label>
+                <select
+                  id="programa_carrera_id"
+                  value={programaForm.carrera_id}
+                  onChange={async (e) => {
+                    const nuevaCarreraId = e.target.value
+                    setProgramaForm({ carrera_id: nuevaCarreraId, plan_id: '' })
+
+                    if (!nuevaCarreraId) {
+                      setPlanes([])
+                      return
+                    }
+
+                    try {
+                      const planesCarrera = await carrerasService.getPlanesByCarrera(parseInt(nuevaCarreraId, 10))
+                      setPlanes(planesCarrera)
+                    } catch (error) {
+                      console.error('Error cargando planes:', error)
+                      setPlanes([])
+                    }
+                  }}
+                  required
+                >
+                  <option value="">Selecciona una carrera</option>
+                  {loadingCarreras ? (
+                    <option>Cargando...</option>
+                  ) : (
+                    carreras.map((carrera) => (
+                      <option key={carrera.id} value={carrera.id}>
+                        {carrera.nombre}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="programa_plan_id">Plan de Estudio:</label>
+                <select
+                  id="programa_plan_id"
+                  value={programaForm.plan_id}
+                  onChange={(e) => setProgramaForm({ ...programaForm, plan_id: e.target.value })}
+                  required
+                >
+                  <option value="">Selecciona un plan</option>
+                  {programaForm.carrera_id ? (
+                    planes.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.nombre}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>Selecciona una carrera primero</option>
+                  )}
+                </select>
+              </div>
+
+              <div className={styles.botonesForm}>
+                <button
+                  type="submit"
+                  className={`${styles.btn} ${styles.primary}`}
+                  disabled={guardandoPrograma}
+                >
+                  <i className="fas fa-save"></i> {guardandoPrograma ? 'Guardando...' : 'Guardar'}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.secondary}`}
+                  onClick={closeProgramaModal}
                 >
                   Cancelar
                 </button>

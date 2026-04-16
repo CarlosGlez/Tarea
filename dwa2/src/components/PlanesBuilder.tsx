@@ -91,6 +91,10 @@ const getBloqueLabel = (tipoBloque: string) => {
   return "Bloque Profesional"
 }
 
+interface PlanesBuilderProps {
+  carreraFijaId?: number | null
+}
+
 interface DraggableMateriaCardProps {
   materia: MateriaCatalogo
   source: DragSource
@@ -156,7 +160,7 @@ const SemesterDropColumn = ({ semestre, children }: SemesterDropColumnProps) => 
   )
 }
 
-export const PlanesBuilder = () => {
+export const PlanesBuilder = ({ carreraFijaId = null }: PlanesBuilderProps) => {
   const { carreras, loading: loadingCarreras } = useCarreras()
 
   const [selectedCarreraId, setSelectedCarreraId] = useState<number | null>(null)
@@ -183,6 +187,13 @@ export const PlanesBuilder = () => {
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  const carreraBloqueada = Boolean(carreraFijaId)
+
+  useEffect(() => {
+    if (!carreraFijaId) return
+    setSelectedCarreraId(carreraFijaId)
+  }, [carreraFijaId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -552,9 +563,9 @@ export const PlanesBuilder = () => {
             id="carrera_select"
             value={selectedCarreraId ?? ""}
             onChange={(event) => setSelectedCarreraId(event.target.value ? Number(event.target.value) : null)}
-            disabled={loadingCarreras || loadingPanel}
+            disabled={carreraBloqueada || loadingCarreras || loadingPanel}
           >
-            <option value="">Selecciona una carrera</option>
+            {!carreraBloqueada && <option value="">Selecciona una carrera</option>}
             {carreras.map((carrera) => (
               <option key={carrera.id} value={carrera.id}>
                 {carrera.nombre}

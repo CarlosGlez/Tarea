@@ -113,7 +113,7 @@ router.post('/login', async (req, res) => {
 
 // Ruta POST para registro de alumnos
 router.post('/register', async (req, res) => {
-  const { nombre_completo, correo, password, escuela_procedencia } = req.body
+  const { nombre_completo, correo, password, escuela_procedencia, carrera_id, plan_id } = req.body
 
   if (!nombre_completo || !correo || !password) {
     return res.status(400).json({ message: 'Faltan campos obligatorios' })
@@ -152,10 +152,44 @@ router.post('/register', async (req, res) => {
 
             const userId = insertResult.insertId
 
-            return res.status(201).json({
-              message: 'Cuenta creada. Un coordinador debe asignar carrera y plan de estudio antes de completar tu perfil académico.',
-              id: userId
-            })
+            // Si se proporciona carrera_id y plan_id, asignar al alumno
+            if (carrera_id && plan_id) {
+              console.log('Creando alumno con carrera_id:', carrera_id, 'plan_id:', plan_id)
+              
+              // Crear registro en tabla alumnos
+              db.query(
+                'INSERT INTO alumnos (id_alumno, matricula, plan_id, estatus_academico) VALUES (?, ?, ?, ?)',
+                [userId, `${Date.now()}`, plan_id, 'inscrito'],
+                (alumnoErr) => {
+                  if (alumnoErr) {
+                    console.error('Error creating alumno record:', alumnoErr)
+                    return res.status(500).json({ message: 'Error creando registro de alumno' })
+                  }
+
+                  // Asignar a carrera
+                  db.query(
+                    'INSERT INTO alumno_carrera (alumno_id, carrera_id, activo) VALUES (?, ?, ?)',
+                    [userId, carrera_id, 1],
+                    (carreraErr) => {
+                      if (carreraErr) {
+                        console.error('Error assigning alumno to carrera:', carreraErr)
+                        return res.status(500).json({ message: 'Error asignando carrera' })
+                      }
+
+                      return res.status(201).json({
+                        message: 'Cuenta creada y asignada a carrera exitosamente.',
+                        id: userId
+                      })
+                    }
+                  )
+                }
+              )
+            } else {
+              return res.status(201).json({
+                message: 'Cuenta creada. Un coordinador debe asignar carrera y plan de estudio antes de completar tu perfil académico.',
+                id: userId
+              })
+            }
           }
         )
       }

@@ -21,6 +21,8 @@ interface RegisterPayload {
   correo: string
   password: string
   escuela_procedencia: string
+  carrera_id?: number
+  plan_id?: number
 }
 
 // Función para hacer login

@@ -1,10 +1,21 @@
 // Componente de formulario de login (estilizado con módulo CSS)
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../hooks/useAuth.ts"
 import { ThemeToggle } from "./ThemeToggle"
 import styles from "./LoginForm.module.css"
 
 import logoIEST from "../assets/logo formal IEST.png"
+
+interface Carrera {
+  id: number
+  nombre: string
+  abreviatura: string
+}
+
+interface PlanEstudios {
+  id: number
+  nombre: string
+}
 
 export const LoginForm = () => {
   const { login, register, loading } = useAuth()
@@ -15,6 +26,48 @@ export const LoginForm = () => {
   const [password, setPassword] = useState("")
   const [nombreCompleto, setNombreCompleto] = useState("")
   const [escuelaProcedencia, setEscuelaProcedencia] = useState("")
+  const [selectedCarrera, setSelectedCarrera] = useState<number | "">("")
+  const [selectedPlan, setSelectedPlan] = useState<number | "">("")
+  const [carreras, setCarreras] = useState<Carrera[]>([])
+  const [planes, setPlanes] = useState<PlanEstudios[]>([])
+  const [loadingCarreras, setLoadingCarreras] = useState(false)
+
+  // Obtener carreras disponibles
+  useEffect(() => {
+    const fetchCarreras = async () => {
+      try {
+        setLoadingCarreras(true)
+        const response = await fetch("http://localhost:3000/api/carreras")
+        const data = await response.json()
+        setCarreras(data)
+      } catch (error) {
+        console.error("Error loading carreras:", error)
+      } finally {
+        setLoadingCarreras(false)
+      }
+    }
+
+    fetchCarreras()
+  }, [])
+
+  // Obtener planes de estudio cuando se selecciona una carrera
+  useEffect(() => {
+    if (selectedCarrera) {
+      const fetchPlanes = async () => {
+        try {
+          const response = await fetch(`http://localhost:3000/api/carreras/${selectedCarrera}/planes`)
+          const data = await response.json()
+          setPlanes(data)
+          setSelectedPlan("")
+        } catch (error) {
+          console.error("Error loading planes:", error)
+          setPlanes([])
+        }
+      }
+
+      fetchPlanes()
+    }
+  }, [selectedCarrera])
 
   // Función que maneja el envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,11 +75,19 @@ export const LoginForm = () => {
 
     try {
       if (isRegisterMode) {
-        await register(nombreCompleto, correoRegistro, password, escuelaProcedencia)
+        // Validar que se haya seleccionado carrera y plan para alumno
+        if (!selectedCarrera || !selectedPlan) {
+          alert("Por favor selecciona una carrera y plan de estudios")
+          return
+        }
+        
+        await register(nombreCompleto, correoRegistro, password, escuelaProcedencia, selectedCarrera as number, selectedPlan as number)
         alert("Cuenta creada exitosamente. Ahora puedes iniciar sesión.")
         setIsRegisterMode(false)
         setLoginIdentifier(correoRegistro)
         setPassword("")
+        setSelectedCarrera("")
+        setSelectedPlan("")
         return
       }
 
@@ -103,6 +164,43 @@ export const LoginForm = () => {
             onChange={e => setEscuelaProcedencia(e.target.value)}
             required
           />
+        )}
+
+        {isRegisterMode && (
+          <>
+            <select
+              className={styles.input}
+              value={selectedCarrera}
+              onChange={e => setSelectedCarrera(e.target.value ? Number(e.target.value) : "")}
+              required
+              disabled={loadingCarreras}
+            >
+              <option value="">
+                {loadingCarreras ? "Cargando carreras..." : "Selecciona una carrera"}
+              </option>
+              {carreras.map(carrera => (
+                <option key={carrera.id} value={carrera.id}>
+                  {carrera.nombre} ({carrera.abreviatura})
+                </option>
+              ))}
+            </select>
+
+            {selectedCarrera && (
+              <select
+                className={styles.input}
+                value={selectedPlan}
+                onChange={e => setSelectedPlan(e.target.value ? Number(e.target.value) : "")}
+                required
+              >
+                <option value="">Selecciona un plan de estudios</option>
+                {planes.map(plan => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </>
         )}
 
         <input

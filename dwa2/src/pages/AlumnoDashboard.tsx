@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { MateriasListAlumno } from "../components/MateriasListAlumno"
+import { StudyPlanProgress } from "../components/StudyPlanProgress"
+import { useMateriasAlumno } from "../hooks/useMateriasAlumno"
 import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
 import styles from "./AlumnoDashboard.module.css"
-import { Plan2020, Pomeranio } from "../assets"
+import { Pomeranio } from "../assets"
 
 const formatearFecha = (fecha?: string | null) => {
   if (!fecha) return 'No especificada'
@@ -16,6 +18,8 @@ const formatearEstatus = (estatus?: string) => {
 }
 
 export const AlumnoDashboard = () => {
+  const alumnoId = Number(localStorage.getItem("userId")) || null
+
   // Estado para guardar datos del usuario (incluye nombre completo, correo, etc.)
   const [usuario, setUsuario] = useState<AlumnoDatos | null>(() => {
     const id = Number(localStorage.getItem("userId"))
@@ -35,6 +39,7 @@ export const AlumnoDashboard = () => {
       fecha_creacion: ''
     }
   })
+  const { materias, loading: loadingMaterias } = useMateriasAlumno(alumnoId)
   // Estado para controlar qué sección se muestra
   const [seccionActual, setSeccionActual] = useState("inicio")
 
@@ -135,9 +140,24 @@ export const AlumnoDashboard = () => {
         {seccionActual === "kardex" && (
           <div className={styles.seccion}>
             <h1>Mi Kardex</h1>
-            <p>Aquí estarán tus calificaciones históricas.</p>
-            <img src={Plan2020} alt="Kardex placeholder" className={styles.kardexPlaceholder} />
-            {/* TODO: Cargar datos de kardex desde API */}
+            <p>Consulta tu plan por semestre y el estatus actual de cada materia.</p>
+
+            <StudyPlanProgress
+              materias={materias}
+              loading={loadingMaterias}
+              title="Mi avance academico"
+              subtitle="Las materias cambian de color segun su estatus actual en tu trayectoria."
+              enableMateriaQuickView
+              student={{
+                nombre: usuario ? `${usuario.nombre} ${usuario.apellido}`.trim() : "Alumno",
+                identificador: usuario?.matricula || usuario?.id || "-",
+                carrera: usuario?.carrera_nombre || "Carrera no especificada",
+                plan: usuario?.plan_estudios || "Plan no especificado",
+                estatus: formatearEstatus(usuario?.estatus_academico),
+                avatarUrl: usuario?.imagen_url || Pomeranio,
+              }}
+              emptyMessage="Todavia no hay materias cargadas para mostrar tu plan de estudios."
+            />
           </div>
         )}
 
@@ -145,8 +165,8 @@ export const AlumnoDashboard = () => {
         {seccionActual === "materias" && (
           <div className={styles.seccion}>
             <h1>Lista de Materias</h1>
-            <p>Aquí verás todas tus materias inscritas.</p>
-            <MateriasListAlumno alumnoId={Number(localStorage.getItem('userId')) || null} />
+            <p>Aquí verás todas tus materias agrupadas por estatus.</p>
+            <MateriasListAlumno materias={materias} loading={loadingMaterias} />
           </div>
         )}
       </div>

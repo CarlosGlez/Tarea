@@ -44,7 +44,26 @@ export const deleteUsuario = async (id: number): Promise<void> => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'DELETE'
   })
-  if (!response.ok) throw new Error('Error deleting user')
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    throw new Error(errorData?.message || 'Error deleting user')
+  }
+}
+
+export const updateAlumnoPrograma = async (
+  id: number,
+  payload: { carrera_id: number; plan_id: number }
+): Promise<void> => {
+  const response = await fetch(`${API_URL}/${id}/alumno-programa`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    throw new Error(errorData?.message || 'Error updating alumno programa')
+  }
 }
 
 // Obtener datos personales del alumno

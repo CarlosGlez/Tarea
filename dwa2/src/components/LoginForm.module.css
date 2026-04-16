@@ -6,10 +6,25 @@
   justify-content: center;
   padding: 0 16px;
   box-sizing: border-box;
+  position: relative;
 
   background: linear-gradient(
-    rgba(255, 88, 0, 0.75),
-    rgba(255, 88, 0, 0.95)
+    135deg,
+    rgba(255, 107, 29, 0.5),
+    rgba(255, 140, 66, 0.5)
+  ), url('../assets/login-img.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: var(--color-bg);
+  transition: background 0.3s ease;
+}
+
+[data-theme="dark"] .loginWrapper {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 20, 10, 0.8),
+    rgba(40, 25, 15, 0.8)
   ), url('../assets/login-img.jpg');
   background-size: cover;
   background-position: center;
@@ -24,10 +39,16 @@
   border-radius: 12px;
   width: 100%;
   max-width: 400px;
-  background-color: #ff5800;
+  background-color: rgba(255, 107, 29, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
   align-items: stretch;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .card {
+  background-color: rgba(51, 35, 20, 0.95);
+  border: 1px solid rgba(255, 107, 29, 0.4);
 }
 
 .brand {
@@ -78,6 +99,12 @@
   transform: translateY(-1px);
 }
 
+.input:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .button {
   width: 100%;
   padding: 12px 14px;
@@ -94,7 +121,12 @@
 
 .button:hover:not(:disabled) {
   background-color: #ffffff;
-  color: #ff5800;
+  color: rgb(255, 107, 29);
+}
+
+[data-theme="dark"] .button:hover:not(:disabled) {
+  background-color: rgba(255, 107, 29, 0.2);
+  color: #ffffff;
 }
 
 .button:disabled {
@@ -130,8 +162,15 @@
 }
 
 .themeToggleContainer {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 100;
+  z-index: 1000;
+}
+
+@media (max-width: 600px) {
+  .themeToggleContainer {
+    top: 16px;
+    right: 16px;
+  }
 }

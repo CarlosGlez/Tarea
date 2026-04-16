@@ -68,21 +68,31 @@ router.get('/info', (req, res) => {
 // GET /api/coordinador/alumnos - Obtener alumnos de la carrera del coordinador
 router.get('/alumnos', (req, res) => {
   const { carrera_id } = req.query
-  
-  if (!carrera_id) {
-    return res.status(400).json({ message: "carrera_id es requerido" })
-  }
 
-  const query = `
-    SELECT u.*, a.matricula, a.plan_id, a.estatus_academico, a.generacion, a.escuela_procedencia
+  let query = `
+    SELECT u.*, a.matricula, a.plan_id, a.estatus_academico, a.generacion, a.escuela_procedencia, ac.carrera_id
     FROM usuarios u
     JOIN alumnos a ON u.id = a.id_alumno
     JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
-    WHERE ac.carrera_id = ? AND ac.activo = 1 AND u.rol = 'alumno'
+    WHERE ac.activo = 1 AND u.rol = 'alumno'
     ORDER BY a.matricula
   `
-  
-  db.query(query, [carrera_id], (err, results) => {
+
+  const params = []
+
+  if (carrera_id) {
+    query = `
+      SELECT u.*, a.matricula, a.plan_id, a.estatus_academico, a.generacion, a.escuela_procedencia, ac.carrera_id
+      FROM usuarios u
+      JOIN alumnos a ON u.id = a.id_alumno
+      JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
+      WHERE ac.carrera_id = ? AND ac.activo = 1 AND u.rol = 'alumno'
+      ORDER BY a.matricula
+    `
+    params.push(carrera_id)
+  }
+
+  db.query(query, params, (err, results) => {
     if (err) {
       console.error('Error en GET /api/coordinador/alumnos:', err)
       return res.status(500).json(err)

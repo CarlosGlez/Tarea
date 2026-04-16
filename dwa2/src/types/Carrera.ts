@@ -18,6 +18,7 @@ export interface Alumno {
   rol: string
   fecha_creacion: string
   matricula: string
+  carrera_id?: number
   plan_id: number
   estatus_academico: string
   generacion: string
