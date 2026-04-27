@@ -10,8 +10,8 @@
 
   background: linear-gradient(
     135deg,
-    rgba(255, 107, 29, 0.5),
-    rgba(255, 140, 66, 0.5)
+    rgba(200, 85, 25, 0.6),
+    rgba(210, 100, 40, 0.6)
   ), url('../assets/login-img.jpg');
   background-size: cover;
   background-position: center;
@@ -39,7 +39,7 @@
   border-radius: 12px;
   width: 100%;
   max-width: 400px;
-  background-color: rgba(255, 107, 29, 0.9);
+  background-color: rgba(200, 85, 25, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
   align-items: stretch;
@@ -48,7 +48,7 @@
 
 [data-theme="dark"] .card {
   background-color: rgba(51, 35, 20, 0.95);
-  border: 1px solid rgba(255, 107, 29, 0.4);
+  border: 1px solid rgba(200, 85, 25, 0.4);
 }
 
 .brand {
@@ -105,6 +105,36 @@
   opacity: 0.6;
 }
 
+.passwordInputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInputGroup .input {
+  padding-right: 45px;
+  margin: 0;
+}
+
+.passwordToggleBtn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #888888;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.passwordToggleBtn:hover {
+  color: #333333;
+}
+
 .button {
   width: 100%;
   padding: 12px 14px;
@@ -121,11 +151,11 @@
 
 .button:hover:not(:disabled) {
   background-color: #ffffff;
-  color: rgb(255, 107, 29);
+  color: rgb(200, 85, 25);
 }
 
 [data-theme="dark"] .button:hover:not(:disabled) {
-  background-color: rgba(255, 107, 29, 0.2);
+  background-color: rgba(200, 85, 25, 0.2);
   color: #ffffff;
 }
 

@@ -3,6 +3,34 @@
   min-height: 100vh;
 }
 
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+.pageContainer {
+  width: 100%;
+  min-height: 100vh;
+  animation: pageEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .appLoading {
   min-height: 100vh;
   display: grid;

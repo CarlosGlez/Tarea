@@ -17,6 +17,7 @@
   --sp-focus-ring: rgba(255, 88, 0, 0.3);
   display: grid;
   gap: 20px;
+  animation: fadeSlideIn 0.35s ease both;
 }
 
 :global([data-theme="dark"]) .wrapper {
@@ -63,6 +64,15 @@
   border-radius: var(--radius-lg);
   padding: 20px;
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.progressPanel:hover,
+.studentPanel:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
 }
 
 .panelEyebrow {
@@ -102,6 +112,7 @@
   display: grid;
   place-items: center;
   background: conic-gradient(#ff7a00 0 var(--progress-value), var(--sp-ring-rest) var(--progress-value) 100%);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .progressRingInner {
@@ -140,6 +151,14 @@
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   padding: 12px 14px;
+  transition: all 0.25s ease;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
 }
 
 .metricCard span,
@@ -179,6 +198,7 @@
   border-radius: 24px;
   object-fit: cover;
   border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
 }
 
 .studentAvatarFallback {
@@ -201,6 +221,14 @@
   border-radius: var(--radius-md);
   padding: 12px 14px;
   background: var(--sp-info-bg);
+  transition: all 0.25s ease;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.studentInfoItem:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
 }
 
 .legend {
@@ -239,6 +267,14 @@
   background: var(--sp-column-bg);
   padding: 14px;
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  animation: slideLeft 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.semesterColumn:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
 }
 
 .semesterHeader {
@@ -505,5 +541,16 @@
   .progressRingInner {
     width: 112px;
     height: 112px;
+  }
+
+  .planScroller {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .semestersGrid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    min-width: 100%;
   }
 }

@@ -59,7 +59,7 @@ function App() {
   // Renderizar página correspondiente
   return (
     <ThemeProvider>
-      <div>
+      <div key={currentPage} className="pageContainer">
         {currentPage === "login" && <LoginForm />}
         {currentPage === "alumno" && <AlumnoDashboard />}
         {currentPage === "coordinador" && <CoordinadorDashboard />}

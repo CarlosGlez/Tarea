@@ -42,7 +42,7 @@ export const AdminDashboard = () => {
       <Sidebar title="MiKardex - Admin" menuItems={menuItems} />
 
       {/* Contenido principal */}
-      <div className={styles.contenido}>
+      <div className={styles.contenido} key={`${seccionActual}-${subseccionCarreras}`}>
         {/* Sección de Inicio */}
         {seccionActual === "inicio" && (
           <div className={styles.seccion}>

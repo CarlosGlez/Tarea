@@ -83,7 +83,7 @@ export const AlumnoDashboard = () => {
       <Sidebar title="MiKardex - Alumno" menuItems={menuItems} />
 
       {/* Contenido principal */}
-      <div className={styles.contenido}>
+      <div className={styles.contenido} key={seccionActual}>
         {/* Sección de Inicio */}
         {seccionActual === "inicio" && (
           <div className={styles.seccion}>

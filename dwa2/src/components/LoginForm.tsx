@@ -24,6 +24,7 @@ export const LoginForm = () => {
   const [loginIdentifier, setLoginIdentifier] = useState("")
   const [correoRegistro, setCorreoRegistro] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [nombreCompleto, setNombreCompleto] = useState("")
   const [escuelaProcedencia, setEscuelaProcedencia] = useState("")
   const [selectedCarrera, setSelectedCarrera] = useState<number | "">("")
@@ -203,14 +204,24 @@ export const LoginForm = () => {
           </>
         )}
 
-        <input
-          className={styles.input}
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
+        <div className={styles.passwordInputGroup}>
+          <input
+            className={styles.input}
+            type={showPassword ? "text" : "password"}
+            placeholder="Contraseña"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className={styles.passwordToggleBtn}
+            onClick={() => setShowPassword(!showPassword)}
+            title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            <i className={`fas fa-eye${showPassword ? "-slash" : ""}`}></i>
+          </button>
+        </div>
 
         <button className={styles.button} type="submit" disabled={loading}>
           {loading ? "Cargando..." : isRegisterMode ? "Crear cuenta" : "Iniciar sesión"}
@@ -224,6 +235,7 @@ export const LoginForm = () => {
             onClick={() => {
               setIsRegisterMode(prev => !prev)
               setPassword("")
+              setShowPassword(false)
             }}
           >
             {isRegisterMode ? "Inicia sesión" : "Regístrate"}

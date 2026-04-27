@@ -6,7 +6,7 @@
   min-height: 100vh;
   padding: 20px;
   position: relative;
-  transition: width 0.3s, background-color 0.3s;
+  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease, box-shadow 0.3s ease;
   border-right: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
@@ -88,7 +88,12 @@
   gap: 10px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
-  transition: background-color 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menu li:hover {
+  background-color: rgba(255, 88, 0, 0.08);
+  transform: translateX(4px);
 }
 
 .menu li i {
@@ -108,7 +113,7 @@
   font-size: 14px;
   cursor: pointer;
   padding: 0;
-  transition: color 0.3s;
+  transition: all 0.25s ease;
   text-align: left;
   flex: 1;
 }
@@ -118,12 +123,14 @@
 }
 
 .menuItemActive {
-  background: rgba(255, 88, 0, 0.1);
+  background: rgba(255, 88, 0, 0.15);
+  border-radius: var(--radius-sm);
 }
 
 .menuButtonActive {
   color: var(--color-primary);
   font-weight: 700;
+  transition: all 0.25s ease;
 }
 
 .menuButton:hover {

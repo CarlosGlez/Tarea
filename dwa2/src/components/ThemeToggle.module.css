@@ -22,3 +22,9 @@
 .themeToggle:active {
   transform: scale(0.95);
 }
+
+.icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}

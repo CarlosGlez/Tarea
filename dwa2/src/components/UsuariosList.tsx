@@ -39,6 +39,7 @@ export const UsuariosList = ({
   const [modalOpen, setModalOpen] = useState(false)
   const [datosPersonalesOpen, setDatosPersonalesOpen] = useState(false)
   const [programaOpen, setProgramaOpen] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [editingUser, setEditingUser] = useState<Usuario | null>(null)
   const [loadingDatos, setLoadingDatos] = useState(false)
   const [guardandoPrograma, setGuardandoPrograma] = useState(false)
@@ -148,6 +149,7 @@ export const UsuariosList = ({
 
   const handleCreateNew = () => {
     setEditingUser(null)
+    setShowPassword(false)
     setFormData({ 
       nombre_usuario: '', 
       correo: '', 
@@ -173,6 +175,7 @@ export const UsuariosList = ({
 
   const closeModal = () => {
     setModalOpen(false)
+    setShowPassword(false)
     setEditingUser(null)
     setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno', carrera_id: '', plan_id: '' })
   }
@@ -362,14 +365,24 @@ export const UsuariosList = ({
 
               <div className={styles.formGroup}>
                 <label htmlFor="contrasena">Contraseña:</label>
-                <input
-                  id="contrasena"
-                  type="password"
-                  placeholder={editingUser ? "Deja vacío para mantener la actual" : "Ingresa la contraseña"}
-                  value={formData.contrasena}
-                  onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
-                  required={!editingUser}
-                />
+                <div className={styles.passwordInputGroup}>
+                  <input
+                    id="contrasena"
+                    type={showPassword ? "text" : "password"}
+                    placeholder={editingUser ? "Deja vacío para mantener la actual" : "Ingresa la contraseña"}
+                    value={formData.contrasena}
+                    onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
+                    required={!editingUser}
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggleBtn}
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    <i className={`fas fa-eye${showPassword ? "-slash" : ""}`}></i>
+                  </button>
+                </div>
               </div>
 
               <div className={styles.formGroup}>

@@ -1,5 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext'
 import styles from './ThemeToggle.module.css'
+import { Sol } from '../assets'
 
 export const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme()
@@ -14,7 +15,7 @@ export const ThemeToggle = () => {
       {theme === 'light' ? (
         <i className="fas fa-moon"></i>
       ) : (
-        <i className="fas fa-sun"></i>
+        <img src={Sol} alt="Sol" className={styles.icon} />
       )}
     </button>
   )

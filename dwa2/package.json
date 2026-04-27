@@ -7,7 +7,7 @@
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "dev": "concurrently \"npm run dev:client\" \"npm run start\"",
+    "dev": "concurrently \"npm run dev:client -- --host\" \"npm run start\"",
     "dev:client": "vite",
     "start": "node api/server.js",
     "build": "tsc -b && vite build",
