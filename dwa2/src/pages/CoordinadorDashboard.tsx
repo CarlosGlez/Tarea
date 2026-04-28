@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
+import { SectionTransition } from "../components/SectionTransition"
 import { UsuariosList } from "../components/UsuariosList"
 import { CarrerasList } from "../components/CarrerasList"
 import { PlanesBuilder } from "../components/PlanesBuilder"
@@ -232,7 +233,8 @@ export const CoordinadorDashboard = () => {
       <Sidebar title="MiKardex - Coordinador" menuItems={menuItems} />
 
       {/* Contenido principal */}
-      <div className={styles.contenido} key={`${seccionActual}-${subseccionCarreras}-${vistaDetalleAlumno}`}>
+      <div className={styles.contenido}>
+        <SectionTransition key={`${seccionActual}-${subseccionCarreras}-${vistaDetalleAlumno}`}>
         {/* Sección de Inicio */}
         {seccionActual === "inicio" && (
           <div className={styles.seccion}>
@@ -646,6 +648,7 @@ export const CoordinadorDashboard = () => {
             </div>
           </div>
         )}
+        </SectionTransition>
       </div>
     </div>
   )

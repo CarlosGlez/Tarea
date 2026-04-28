@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
+import { SectionTransition } from "../components/SectionTransition"
 import { MateriasListAlumno } from "../components/MateriasListAlumno"
 import { StudyPlanProgress } from "../components/StudyPlanProgress"
 import { useMateriasAlumno } from "../hooks/useMateriasAlumno"
@@ -83,7 +84,8 @@ export const AlumnoDashboard = () => {
       <Sidebar title="MiKardex - Alumno" menuItems={menuItems} />
 
       {/* Contenido principal */}
-      <div className={styles.contenido} key={seccionActual}>
+      <div className={styles.contenido}>
+        <SectionTransition key={seccionActual}>
         {/* Sección de Inicio */}
         {seccionActual === "inicio" && (
           <div className={styles.seccion}>
@@ -169,6 +171,7 @@ export const AlumnoDashboard = () => {
             <MateriasListAlumno materias={materias} loading={loadingMaterias} />
           </div>
         )}
+        </SectionTransition>
       </div>
     </div>
   )
