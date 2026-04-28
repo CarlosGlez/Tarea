@@ -3,7 +3,8 @@
 /* Contenedor principal con flexbox para sidebar + contenido */
 .container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background-color: var(--color-bg);
   font-family: var(--font-base);
 }
@@ -152,6 +153,7 @@
   .container {
     flex-direction: column;
     height: auto;
+    overflow: visible;
   }
 
   .contenido {

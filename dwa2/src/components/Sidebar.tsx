@@ -41,7 +41,6 @@ export const Sidebar = ({ title, menuItems }: SidebarProps) => {
       <ul className={styles.menu}>
         {menuItems.map((item, index) => (
           <li key={index} className={index === activeIndex ? styles.menuItemActive : ""}>
-            <i className={`fas ${item.icon}`}></i>
             <button
               onClick={() => {
                 setActiveIndex(index)
@@ -49,6 +48,7 @@ export const Sidebar = ({ title, menuItems }: SidebarProps) => {
               }}
               className={`${styles.menuButton} ${index === activeIndex ? styles.menuButtonActive : ""}`}
             >
+              <i className={`fas ${item.icon}`}></i>
               <span className={styles.menuLabel}>{item.label}</span>
             </button>
           </li>
