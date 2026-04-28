@@ -9,6 +9,8 @@
 -- 1. ELIMINAR TODO (si existe)
 -- ========================================
 DROP TABLE IF EXISTS sanciones;
+DROP TABLE IF EXISTS bajas;
+DROP TABLE IF EXISTS inscripciones;
 DROP TABLE IF EXISTS historial_academico;
 DROP TABLE IF EXISTS enrolamiento;
 DROP TABLE IF EXISTS secciones;
@@ -171,6 +173,28 @@ CREATE TABLE sanciones (
     fecha_registro DATE DEFAULT CURRENT_DATE,
     activa TINYINT(1) DEFAULT 1,
     FOREIGN KEY (alumno_id) REFERENCES alumnos(id_alumno)
+);
+
+CREATE TABLE bajas (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    alumno_id      INT NOT NULL,
+    fecha_baja     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    motivo         VARCHAR(255),
+    registrado_por INT,
+    FOREIGN KEY (alumno_id)       REFERENCES alumnos(id_alumno),
+    FOREIGN KEY (registrado_por)  REFERENCES usuarios(id)
+);
+
+CREATE TABLE inscripciones (
+    id                 INT AUTO_INCREMENT PRIMARY KEY,
+    alumno_id          INT NOT NULL,
+    fecha_inscripcion  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    periodo            VARCHAR(20),
+    carrera_id         INT NOT NULL,
+    registrado_por     INT,
+    FOREIGN KEY (alumno_id)       REFERENCES alumnos(id_alumno),
+    FOREIGN KEY (carrera_id)      REFERENCES carreras(id),
+    FOREIGN KEY (registrado_por)  REFERENCES usuarios(id)
 );
 
 CREATE TABLE coordinadores (

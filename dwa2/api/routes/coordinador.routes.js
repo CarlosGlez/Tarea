@@ -232,36 +232,35 @@ router.get('/estadisticas', (req, res) => {
 
 // GET /api/coordinador/reportes/inscripciones - Reporte de inscripciones
 router.get('/reportes/inscripciones', (req, res) => {
-  const { carrera_id, semestre, periodo } = req.query
-  
+  const { carrera_id, periodo } = req.query
+
   if (!carrera_id) {
     return res.status(400).json({ message: "carrera_id es requerido" })
   }
 
   let query = `
-    SELECT 
+    SELECT
+      u.nombre,
+      u.apellido,
       a.matricula,
-      u.nombre_usuario,
-      u.correo,
       a.generacion,
-      COUNT(pm.materia_id) as materias_inscritas,
-      a.fecha_creacion
-    FROM alumnos a
+      i.periodo,
+      i.fecha_inscripcion
+    FROM inscripciones i
+    JOIN alumnos a  ON i.alumno_id = a.id_alumno
     JOIN usuarios u ON a.id_alumno = u.id
-    JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
-    LEFT JOIN plan_materias pm ON a.plan_id = pm.plan_id
-    WHERE ac.carrera_id = ? AND ac.activo = 1 AND a.estatus_academico = 'inscrito'
+    WHERE i.carrera_id = ?
   `
-  
+
   const params = [carrera_id]
-  
-  if (semestre) {
-    query += ` AND pm.semestre = ?`
-    params.push(semestre)
+
+  if (periodo) {
+    query += ` AND i.periodo = ?`
+    params.push(periodo)
   }
-  
-  query += ` GROUP BY a.id_alumno ORDER BY a.matricula`
-  
+
+  query += ` ORDER BY i.fecha_inscripcion DESC`
+
   db.query(query, params, (err, results) => {
     if (err) {
       console.error('Error en reporte de inscripciones:', err)
@@ -314,36 +313,64 @@ router.get('/reportes/rendimiento', (req, res) => {
 
 // GET /api/coordinador/reportes/desercion - Reporte de deserción
 router.get('/reportes/desercion', (req, res) => {
-  const { carrera_id } = req.query
-  
+  const { carrera_id, anio } = req.query
+
   if (!carrera_id) {
     return res.status(400).json({ message: "carrera_id es requerido" })
   }
 
-  const query = `
-    SELECT 
-      COUNT(*) as total_desertores,
-      COUNT(CASE WHEN YEAR(NOW()) - YEAR(a.fecha_creacion) <= 1 THEN 1 END) as desertores_recientes,
-      COUNT(CASE WHEN a.generacion IS NOT NULL THEN 1 END) as desertores_por_generacion
-    FROM alumnos a
+  let listaQuery = `
+    SELECT
+      u.nombre,
+      u.apellido,
+      a.matricula,
+      a.generacion,
+      b.fecha_baja,
+      b.motivo,
+      YEAR(b.fecha_baja)  AS anio_baja,
+      MONTH(b.fecha_baja) AS mes_baja
+    FROM bajas b
+    JOIN alumnos a       ON b.alumno_id   = a.id_alumno
+    JOIN usuarios u      ON a.id_alumno   = u.id
     JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
-    WHERE ac.carrera_id = ? AND ac.activo = 1 AND a.estatus_academico = 'baja'
+    WHERE ac.carrera_id = ?
   `
-  
-  db.query(query, [carrera_id], (err, results) => {
+
+  const listaParams = [carrera_id]
+
+  if (anio) {
+    listaQuery += ` AND YEAR(b.fecha_baja) = ?`
+    listaParams.push(anio)
+  }
+
+  listaQuery += ` ORDER BY b.fecha_baja DESC`
+
+  const resumenQuery = `
+    SELECT
+      YEAR(b.fecha_baja)  AS anio,
+      MONTH(b.fecha_baja) AS mes,
+      COUNT(*)            AS cantidad_bajas
+    FROM bajas b
+    JOIN alumnos a       ON b.alumno_id   = a.id_alumno
+    JOIN alumno_carrera ac ON a.id_alumno = ac.alumno_id
+    WHERE ac.carrera_id = ?
+    GROUP BY YEAR(b.fecha_baja), MONTH(b.fecha_baja)
+    ORDER BY anio DESC, mes DESC
+  `
+
+  db.query(listaQuery, listaParams, (err, lista) => {
     if (err) {
-      console.error('Error en reporte de deserción:', err)
+      console.error('Error en reporte de deserción (lista):', err)
       return res.status(500).json(err)
     }
-    
-    if (results.length > 0) {
-      return res.json(results[0])
-    }
-    
-    res.json({
-      total_desertores: 0,
-      desertores_recientes: 0,
-      desertores_por_generacion: 0
+
+    db.query(resumenQuery, [carrera_id], (err2, resumen) => {
+      if (err2) {
+        console.error('Error en reporte de deserción (resumen):', err2)
+        return res.status(500).json(err2)
+      }
+
+      res.json({ lista, resumen, total: lista.length })
     })
   })
 })
@@ -477,6 +504,98 @@ router.put('/alumnos/:alumnoId/materias/:materiaId', (req, res) => {
         )
       }
     )
+  })
+})
+
+// PUT /api/coordinador/alumnos/:alumnoId/baja - Dar de baja a un alumno
+router.put('/alumnos/:alumnoId/baja', (req, res) => {
+  const { alumnoId } = req.params
+  const { motivo, registrado_por, carrera_id } = req.body
+
+  if (!carrera_id) {
+    return res.status(400).json({ message: 'carrera_id es requerido' })
+  }
+
+  db.getConnection((err, connection) => {
+    if (err) return res.status(500).json(err)
+
+    connection.beginTransaction(err => {
+      if (err) { connection.release(); return res.status(500).json(err) }
+
+      connection.query(
+        `UPDATE alumnos SET estatus_academico = 'baja' WHERE id_alumno = ?`,
+        [alumnoId],
+        (err) => {
+          if (err) {
+            return connection.rollback(() => { connection.release(); res.status(500).json(err) })
+          }
+
+          connection.query(
+            `INSERT INTO bajas (alumno_id, motivo, registrado_por) VALUES (?, ?, ?)`,
+            [alumnoId, motivo || null, registrado_por || null],
+            (err) => {
+              if (err) {
+                return connection.rollback(() => { connection.release(); res.status(500).json(err) })
+              }
+
+              connection.commit(err => {
+                if (err) {
+                  return connection.rollback(() => { connection.release(); res.status(500).json(err) })
+                }
+                connection.release()
+                res.json({ message: 'Baja registrada exitosamente' })
+              })
+            }
+          )
+        }
+      )
+    })
+  })
+})
+
+// PUT /api/coordinador/alumnos/:alumnoId/reinscripcion - Reinscribir a un alumno
+router.put('/alumnos/:alumnoId/reinscripcion', (req, res) => {
+  const { alumnoId } = req.params
+  const { periodo, carrera_id, registrado_por } = req.body
+
+  if (!carrera_id) {
+    return res.status(400).json({ message: 'carrera_id es requerido' })
+  }
+
+  db.getConnection((err, connection) => {
+    if (err) return res.status(500).json(err)
+
+    connection.beginTransaction(err => {
+      if (err) { connection.release(); return res.status(500).json(err) }
+
+      connection.query(
+        `UPDATE alumnos SET estatus_academico = 'inscrito' WHERE id_alumno = ?`,
+        [alumnoId],
+        (err) => {
+          if (err) {
+            return connection.rollback(() => { connection.release(); res.status(500).json(err) })
+          }
+
+          connection.query(
+            `INSERT INTO inscripciones (alumno_id, periodo, carrera_id, registrado_por) VALUES (?, ?, ?, ?)`,
+            [alumnoId, periodo || null, carrera_id, registrado_por || null],
+            (err) => {
+              if (err) {
+                return connection.rollback(() => { connection.release(); res.status(500).json(err) })
+              }
+
+              connection.commit(err => {
+                if (err) {
+                  return connection.rollback(() => { connection.release(); res.status(500).json(err) })
+                }
+                connection.release()
+                res.json({ message: 'Reinscripción registrada exitosamente' })
+              })
+            }
+          )
+        }
+      )
+    })
   })
 })
 

@@ -20,16 +20,16 @@ interface Estadisticas {
   alumnosActivos: number
 }
 
-interface ReporteInscripcionItem {
+export interface ReporteInscripcionItem {
+  nombre: string
+  apellido: string
   matricula: string
-  nombre_usuario: string
-  correo: string
   generacion: string | null
-  materias_inscritas: number
-  fecha_creacion: string
+  periodo: string | null
+  fecha_inscripcion: string
 }
 
-interface ReporteRendimientoItem {
+export interface ReporteRendimientoItem {
   nombre_usuario: string
   matricula: string
   materias_cursadas: number
@@ -38,13 +38,30 @@ interface ReporteRendimientoItem {
   estatus_academico: string
 }
 
-interface ReporteDesercion {
-  total_desertores: number
-  desertores_recientes: number
-  desertores_por_generacion: number
+export interface ReporteDesercionItem {
+  nombre: string
+  apellido: string
+  matricula: string
+  generacion: string | null
+  fecha_baja: string
+  motivo: string | null
+  anio_baja: number
+  mes_baja: number
 }
 
-interface ReporteAprobacionItem {
+interface ReporteDesercionResumen {
+  anio: number
+  mes: number
+  cantidad_bajas: number
+}
+
+export interface ReporteDesercion {
+  lista: ReporteDesercionItem[]
+  resumen: ReporteDesercionResumen[]
+  total: number
+}
+
+export interface ReporteAprobacionItem {
   codigo: string
   nombre: string
   estudiantes_totales: number
@@ -119,13 +136,11 @@ export const getEstadisticasByCarrera = async (carreraId: number): Promise<Estad
 // Obtener reporte de inscripciones
 export const getReporteInscripciones = async (
   carreraId: number,
-  semestre?: string,
   periodo?: string
 ): Promise<ReporteInscripcionItem[] | null> => {
   try {
     const params = new URLSearchParams({
       carrera_id: carreraId.toString(),
-      ...(semestre && { semestre }),
       ...(periodo && { periodo }),
     })
     const response = await fetch(`${API_URL}/coordinador/reportes/inscripciones?${params}`)
@@ -161,14 +176,12 @@ export const getReporteRendimiento = async (
 // Obtener reporte de deserción
 export const getReporteDesercion = async (
   carreraId: number,
-  semestre?: string,
-  periodo?: string
+  anio?: string
 ): Promise<ReporteDesercion | null> => {
   try {
     const params = new URLSearchParams({
       carrera_id: carreraId.toString(),
-      ...(semestre && { semestre }),
-      ...(periodo && { periodo }),
+      ...(anio && { anio }),
     })
     const response = await fetch(`${API_URL}/coordinador/reportes/desercion?${params}`)
     if (!response.ok) throw new Error("Error fetching reporte")
@@ -197,6 +210,42 @@ export const getReporteAprobacion = async (
   } catch (error) {
     console.error("Error en getReporteAprobacion:", error)
     return null
+  }
+}
+
+// Dar de baja a un alumno (transacción: UPDATE alumnos + INSERT bajas)
+export const registrarBaja = async (
+  alumnoId: number,
+  carreraId: number,
+  registradoPor: number,
+  motivo?: string
+): Promise<void> => {
+  const response = await fetch(`${API_URL}/coordinador/alumnos/${alumnoId}/baja`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ carrera_id: carreraId, registrado_por: registradoPor, motivo }),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    throw new Error(errorData?.message || "No se pudo registrar la baja")
+  }
+}
+
+// Reinscribir a un alumno (transacción: UPDATE alumnos + INSERT inscripciones)
+export const registrarReinscripcion = async (
+  alumnoId: number,
+  carreraId: number,
+  registradoPor: number,
+  periodo?: string
+): Promise<void> => {
+  const response = await fetch(`${API_URL}/coordinador/alumnos/${alumnoId}/reinscripcion`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ carrera_id: carreraId, registrado_por: registradoPor, periodo }),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    throw new Error(errorData?.message || "No se pudo registrar la reinscripción")
   }
 }
 
