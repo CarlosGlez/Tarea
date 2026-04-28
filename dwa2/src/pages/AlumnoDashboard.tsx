@@ -3,8 +3,12 @@ import { Sidebar } from "../components/Sidebar"
 import { SectionTransition } from "../components/SectionTransition"
 import { MateriasListAlumno } from "../components/MateriasListAlumno"
 import { StudyPlanProgress } from "../components/StudyPlanProgress"
+import { Chat } from "../components/Chat"
+import { Anuncios } from "../components/Anuncios"
 import { useMateriasAlumno } from "../hooks/useMateriasAlumno"
 import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
+import { getChatSinLeerTotal } from "../data/chatService"
+import { getAnunciosNuevosCount } from "../data/anunciosService"
 import styles from "./AlumnoDashboard.module.css"
 import { Pomeranio } from "../assets"
 
@@ -41,8 +45,28 @@ export const AlumnoDashboard = () => {
     }
   })
   const { materias, loading: loadingMaterias } = useMateriasAlumno(alumnoId)
-  // Estado para controlar qué sección se muestra
   const [seccionActual, setSeccionActual] = useState("inicio")
+  const [chatBadge, setChatBadge] = useState(0)
+  const [anunciosBadge, setAnunciosBadge] = useState(0)
+
+  // Polling de badges cada 30s
+  useEffect(() => {
+    if (!alumnoId) return
+    const ANUNCIOS_KEY = `anuncios_visto_${alumnoId}`
+
+    const fetchBadges = async () => {
+      const [chat, anuncios] = await Promise.all([
+        getChatSinLeerTotal(alumnoId, 'alumno'),
+        getAnunciosNuevosCount(alumnoId, localStorage.getItem(ANUNCIOS_KEY) ?? new Date(0).toISOString()),
+      ])
+      setChatBadge(chat)
+      setAnunciosBadge(anuncios)
+    }
+
+    fetchBadges()
+    const interval = setInterval(fetchBadges, 30000)
+    return () => clearInterval(interval)
+  }, [alumnoId])
 
   // Cargar datos del usuario desde el backend usando el ID almacenado
   useEffect(() => {
@@ -75,6 +99,18 @@ export const AlumnoDashboard = () => {
     { label: "Inicio", icon: "fa-home", onClick: () => setSeccionActual("inicio") },
     { label: "Mi Kardex", icon: "fa-book", onClick: () => setSeccionActual("kardex") },
     { label: "Lista de materias", icon: "fa-list-ul", onClick: () => setSeccionActual("materias") },
+    {
+      label: "Anuncios", icon: "fa-bullhorn", badge: anunciosBadge,
+      onClick: () => {
+        setSeccionActual("anuncios")
+        setAnunciosBadge(0)
+        if (alumnoId) localStorage.setItem(`anuncios_visto_${alumnoId}`, new Date().toISOString())
+      }
+    },
+    {
+      label: "Chat", icon: "fa-comments", badge: chatBadge,
+      onClick: () => { setSeccionActual("chat"); setChatBadge(0) }
+    },
     { label: "Cerrar sesión", icon: "fa-sign-out-alt", onClick: handleLogout },
   ]
 
@@ -169,6 +205,24 @@ export const AlumnoDashboard = () => {
             <h1>Lista de Materias</h1>
             <p>Aquí verás todas tus materias agrupadas por estatus.</p>
             <MateriasListAlumno materias={materias} loading={loadingMaterias} />
+          </div>
+        )}
+
+        {/* Sección de Anuncios */}
+        {seccionActual === "anuncios" && alumnoId && (
+          <div className={styles.seccion}>
+            <h1>Anuncios</h1>
+            <p>Comunicados y avisos publicados por tus coordinadores.</p>
+            <Anuncios usuarioId={alumnoId} rol="alumno" />
+          </div>
+        )}
+
+        {/* Sección de Chat */}
+        {seccionActual === "chat" && alumnoId && (
+          <div className={styles.seccion}>
+            <h1>Chat con Coordinador</h1>
+            <p>Comunícate directamente con tu coordinador académico.</p>
+            <Chat usuarioId={alumnoId} rol="alumno" />
           </div>
         )}
         </SectionTransition>

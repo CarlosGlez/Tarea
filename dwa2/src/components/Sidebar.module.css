@@ -126,6 +126,34 @@
   display: inline-block;
 }
 
+.iconWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  background: #e53e3e;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+  border: 2px solid var(--color-surface);
+  pointer-events: none;
+}
+
 .menuItemActive {
   background: rgba(255, 88, 0, 0.15);
   border-radius: var(--radius-sm);

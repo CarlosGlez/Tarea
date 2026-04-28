@@ -5,11 +5,14 @@ import { UsuariosList } from "../components/UsuariosList"
 import { CarrerasList } from "../components/CarrerasList"
 import { PlanesBuilder } from "../components/PlanesBuilder"
 import { StudyPlanProgress } from "../components/StudyPlanProgress"
+import { Chat } from "../components/Chat"
+import { Anuncios } from "../components/Anuncios"
 import { useAlumnosByCarrera, useMateriasByCarrera, useHorariosByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
 import * as coordinadorService from "../data/coordinadorService"
 import type { EstatusMateria } from "../data/coordinadorService"
 import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
 import { getMateriasAlumno } from "../data/materiasService"
+import { getChatSinLeerTotal } from "../data/chatService"
 import type { Alumno } from "../types/Carrera"
 import type { Materia } from "../types/Materia"
 import styles from "./CoordinadorDashboard.module.css"
@@ -75,6 +78,20 @@ export const CoordinadorDashboard = () => {
   const [errorMateria, setErrorMateria] = useState<string | null>(null)
 
   // Usar hooks de coordinador
+  const [chatBadge, setChatBadge] = useState(0)
+
+  // Polling badge de chat cada 30s
+  useEffect(() => {
+    if (!usuario?.id) return
+    const fetchChatBadge = async () => {
+      const total = await getChatSinLeerTotal(usuario.id, 'coordinador')
+      setChatBadge(total)
+    }
+    fetchChatBadge()
+    const interval = setInterval(fetchChatBadge, 30000)
+    return () => clearInterval(interval)
+  }, [usuario?.id])
+
   const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(null)
   const { materias, cargando: cargandoMaterias } = useMateriasByCarrera(
     usuario?.carrera_id || null
@@ -224,6 +241,8 @@ export const CoordinadorDashboard = () => {
     { label: "Materias", icon: "fa-book", onClick: () => setSeccionActual("materias") },
     { label: "Horarios", icon: "fa-calendar", onClick: () => setSeccionActual("horarios") },
     { label: "Reportes", icon: "fa-chart-bar", onClick: () => setSeccionActual("reportes") },
+    { label: "Anuncios", icon: "fa-bullhorn", onClick: () => setSeccionActual("anuncios") },
+    { label: "Chat", icon: "fa-comments", badge: chatBadge, onClick: () => { setSeccionActual("chat"); setChatBadge(0) } },
     { label: "Cerrar sesión", icon: "fa-sign-out-alt", onClick: handleLogout },
   ]
 
@@ -579,6 +598,24 @@ export const CoordinadorDashboard = () => {
             ) : (
               <p className={styles.emptyState}>No hay horarios disponibles para esta carrera.</p>
             )}
+          </div>
+        )}
+
+        {/* Sección de Anuncios */}
+        {seccionActual === "anuncios" && usuario && (
+          <div className={styles.seccion}>
+            <h1>Anuncios</h1>
+            <p>Publica comunicados para los alumnos de una carrera específica o de todas las carreras.</p>
+            <Anuncios usuarioId={usuario.id} rol="coordinador" />
+          </div>
+        )}
+
+        {/* Sección de Chat */}
+        {seccionActual === "chat" && usuario && (
+          <div className={styles.seccion}>
+            <h1>Chat con Alumnos</h1>
+            <p>Revisa y responde los mensajes de los alumnos de tu carrera.</p>
+            <Chat usuarioId={usuario.id} rol="coordinador" />
           </div>
         )}
 

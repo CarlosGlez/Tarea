@@ -10,6 +10,7 @@ interface SidebarProps {
     label: string               // Nombre del enlace
     icon: string               // Icono de FontAwesome (ej: "fa-home")
     onClick: () => void        // Función al hacer click
+    badge?: number             // Número de notificaciones pendientes
   }>
 }
 
@@ -48,7 +49,14 @@ export const Sidebar = ({ title, menuItems }: SidebarProps) => {
               }}
               className={`${styles.menuButton} ${index === activeIndex ? styles.menuButtonActive : ""}`}
             >
-              <i className={`fas ${item.icon}`}></i>
+              <span className={styles.iconWrapper}>
+                <i className={`fas ${item.icon}`}></i>
+                {!!item.badge && item.badge > 0 && (
+                  <span className={styles.badge}>
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </span>
               <span className={styles.menuLabel}>{item.label}</span>
             </button>
           </li>

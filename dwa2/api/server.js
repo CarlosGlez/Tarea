@@ -12,6 +12,8 @@ import usuariosRoutes from './routes/usuarios.routes.js'
 import authRoutes from './routes/auth.routes.js'
 import carrerasRoutes from './routes/carreras.routes.js'
 import coordinadorRoutes from './routes/coordinador.routes.js'
+import chatRoutes from './routes/chat.routes.js'
+import anunciosRoutes from './routes/anuncios.routes.js'
 
 // Crear instancia de Express
 const app = express()
@@ -29,6 +31,8 @@ app.use('/api/usuarios', usuariosRoutes)  // Rutas para gestión de usuarios
 app.use('/api/auth', authRoutes)          // Rutas de autenticación
 app.use('/api/carreras', carrerasRoutes)  // Rutas para gestión de carreras
 app.use('/api/coordinador', coordinadorRoutes)  // Rutas para coordinadores
+app.use('/api/chat', chatRoutes)               // Rutas para el chat
+app.use('/api/anuncios', anunciosRoutes)       // Rutas para anuncios
 
 // Endpoint de health check para verificar conexión a BD
 app.get('/api/health', (req, res) => {
