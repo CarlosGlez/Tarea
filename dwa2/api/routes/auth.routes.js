@@ -1,98 +1,53 @@
-// Rutas de autenticación
 import express from 'express'
 import db from '../config/db.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
-// Crear router de Express
 const router = express.Router()
-// Clave secreta para firmar tokens JWT
-const SECRET = "super_secret_key"
+const SECRET = process.env.JWT_SECRET || 'siex2_super_secret_cambia_esto_en_produccion'
 
-// Ruta POST para login de usuarios
 router.post('/login', async (req, res) => {
-  // Logs de debug para ver qué datos llegan
-  console.log('Login attempt:', req.body)
-  console.log('req.body.nombre_usuario:', req.body.nombre_usuario)
-  console.log('req.body.password:', req.body.password)
-  
-  // Extraer nombre_usuario y password del body de la petición
-  const nombre_usuario = req.body.nombre_usuario
-  const password = req.body.password
-  
-  console.log('Nombre usuario variable:', nombre_usuario)
-  console.log('Password variable:', password)
-  console.log('Buscando usuario con nombre_usuario:', nombre_usuario)
+  const { nombre_usuario, password } = req.body
 
-  // Consultar usuario en la base de datos
   db.query(
     'SELECT * FROM usuarios WHERE nombre_usuario = ? OR correo = ? LIMIT 1',
     [nombre_usuario, nombre_usuario],
     async (err, results) => {
-      // Manejar errores de consulta
-      if (err) {
-        console.log("Error SQL:", err)
-        return res.status(500).json(err)
-      }
+      if (err) return res.status(500).json({ message: 'Error del servidor' })
 
-      console.log('Resultados de la búsqueda:', results)
-
-      // Verificar si el usuario existe
       if (results.length === 0) {
-        console.log("Usuario no encontrado con nombre_usuario:", nombre_usuario)
-        return res.status(401).json({ message: "Usuario no encontrado" })
+        return res.status(401).json({ message: 'Usuario no encontrado' })
       }
 
-      // Obtener el primer resultado (usuario encontrado)
       const user = results[0]
-
-      console.log("Usuario encontrado:", user)
-      console.log("Contraseña recibida:", password)
-      console.log("Contraseña en BD:", user.contrasena)
-
-      // Comparar contraseña usando bcrypt
       const isPasswordValid = await bcrypt.compare(password, user.contrasena)
       if (!isPasswordValid) {
-        console.log("Contraseña incorrecta")
-        return res.status(401).json({ message: "Contraseña incorrecta" })
+        return res.status(401).json({ message: 'Contraseña incorrecta' })
       }
 
-      // Generar token JWT con información del usuario
-      const token = jwt.sign(
-        { id: user.id, rol: user.rol },
-        SECRET,
-        { expiresIn: "2h" }  // Token válido por 2 horas
-      )
+      const token = jwt.sign({ id: user.id, rol: user.rol }, SECRET, { expiresIn: '2h' })
 
-      // Responder con token y datos del usuario
       const respuesta = {
         token,
         usuario: {
           id: user.id,
           nombre_usuario: user.nombre_usuario,
           rol: user.rol,
-          // añadir campos personales si ya están en la tabla usuarios
           nombre: user.nombre || '',
           apellido: user.apellido || '',
-          correo: user.correo || ''
-        }
+          correo: user.correo || '',
+        },
       }
 
-      // Si es coordinador, obtener su carrera asignada
       if (user.rol === 'coordinador') {
         db.query(
-          `SELECT cc.id as coordinador_carrera_id, cc.carrera_id, c.nombre as carrera_nombre, 
-                  c.abreviatura as carrera_abreviatura, cc.rol_cargo
+          `SELECT cc.carrera_id, c.nombre AS carrera_nombre, c.abreviatura AS carrera_abreviatura, cc.rol_cargo
            FROM coordinador_carrera cc
            JOIN carreras c ON cc.carrera_id = c.id
            WHERE cc.coordinador_id = ? AND cc.activo = 1`,
           [user.id],
-          (err, carreraResults) => {
-            if (err) {
-              console.log("Error al obtener carrera del coordinador:", err)
-              return res.status(500).json(err)
-            }
-
+          (err2, carreraResults) => {
+            if (err2) return res.status(500).json({ message: 'Error del servidor' })
             if (carreraResults.length > 0) {
               const carrera = carreraResults[0]
               respuesta.usuario.carrera_id = carrera.carrera_id
@@ -100,7 +55,6 @@ router.post('/login', async (req, res) => {
               respuesta.usuario.carrera_abreviatura = carrera.carrera_abreviatura
               respuesta.usuario.rol_cargo = carrera.rol_cargo
             }
-
             res.json(respuesta)
           }
         )
@@ -111,7 +65,6 @@ router.post('/login', async (req, res) => {
   )
 })
 
-// Ruta POST para registro de alumnos
 router.post('/register', async (req, res) => {
   const { nombre_completo, correo, password, escuela_procedencia, carrera_id, plan_id } = req.body
 
@@ -120,85 +73,111 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Separar nombre completo en nombre y apellido para mantener compatibilidad con el esquema actual.
     const fullName = String(nombre_completo).trim()
     const nameParts = fullName.split(/\s+/)
     const nombre = nameParts.shift() || ''
     const apellido = nameParts.join(' ')
+    const hashedPassword = await bcrypt.hash(password, 10)
 
-    db.query(
-      'SELECT id FROM usuarios WHERE correo = ? OR nombre_usuario = ?',
-      [correo, correo],
-      async (existsErr, existsResults) => {
-        if (existsErr) {
-          console.error('Error verificando usuario existente:', existsErr)
-          return res.status(500).json({ message: 'Error al verificar usuario existente' })
+    const baseUsername = `${nombre}${apellido ? '.' + apellido.split(' ')[0] : ''}`
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9._-]/g, '')
+
+    db.getConnection((connErr, connection) => {
+      if (connErr) return res.status(500).json({ message: 'Error de conexión' })
+
+      connection.beginTransaction((txErr) => {
+        if (txErr) {
+          connection.release()
+          return res.status(500).json({ message: 'Error iniciando transacción' })
         }
 
-        if (existsResults.length > 0) {
-          return res.status(409).json({ message: 'El correo ya está registrado' })
+        const rollback = (error) => {
+          connection.rollback(() => {
+            connection.release()
+            res.status(500).json({ message: error?.message || 'Error en el registro' })
+          })
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10)
-
-        db.query(
-          'INSERT INTO usuarios (nombre_usuario, nombre, apellido, correo, contrasena, rol) VALUES (?, ?, ?, ?, ?, ?)',
-          [correo, nombre, apellido, correo, hashedPassword, 'alumno'],
-          (insertErr, insertResult) => {
-            if (insertErr) {
-              console.error('Error creando usuario en registro:', insertErr)
-              return res.status(500).json({ message: 'No se pudo crear el usuario en la tabla usuarios' })
-            }
-
-            const userId = insertResult.insertId
-
-            // Si se proporciona carrera_id y plan_id, asignar al alumno
-            if (carrera_id && plan_id) {
-              console.log('Creando alumno con carrera_id:', carrera_id, 'plan_id:', plan_id)
-              
-              // Crear registro en tabla alumnos
-              db.query(
-                'INSERT INTO alumnos (id_alumno, matricula, plan_id, estatus_academico) VALUES (?, ?, ?, ?)',
-                [userId, `${Date.now()}`, plan_id, 'inscrito'],
-                (alumnoErr) => {
-                  if (alumnoErr) {
-                    console.error('Error creating alumno record:', alumnoErr)
-                    return res.status(500).json({ message: 'Error creando registro de alumno' })
-                  }
-
-                  // Asignar a carrera
-                  db.query(
-                    'INSERT INTO alumno_carrera (alumno_id, carrera_id, activo) VALUES (?, ?, ?)',
-                    [userId, carrera_id, 1],
-                    (carreraErr) => {
-                      if (carreraErr) {
-                        console.error('Error assigning alumno to carrera:', carreraErr)
-                        return res.status(500).json({ message: 'Error asignando carrera' })
-                      }
-
-                      return res.status(201).json({
-                        message: 'Cuenta creada y asignada a carrera exitosamente.',
-                        id: userId
-                      })
-                    }
-                  )
-                }
-              )
-            } else {
-              return res.status(201).json({
-                message: 'Cuenta creada. Un coordinador debe asignar carrera y plan de estudio antes de completar tu perfil académico.',
-                id: userId
+        connection.query(
+          'SELECT id FROM usuarios WHERE correo = ?',
+          [correo],
+          (existsErr, existsRows) => {
+            if (existsErr) return rollback(existsErr)
+            if (existsRows.length > 0) {
+              return connection.rollback(() => {
+                connection.release()
+                res.status(409).json({ message: 'El correo ya está registrado' })
               })
             }
+
+            connection.query(
+              `SELECT nombre_usuario FROM usuarios WHERE nombre_usuario LIKE ? ORDER BY nombre_usuario`,
+              [`${baseUsername}%`],
+              (usernameCheckErr, usernameRows) => {
+                if (usernameCheckErr) return rollback(usernameCheckErr)
+
+                const taken = new Set(usernameRows.map(r => r.nombre_usuario))
+                let nombre_usuario = baseUsername || correo.split('@')[0]
+                if (taken.has(nombre_usuario)) {
+                  let counter = 2
+                  while (taken.has(`${baseUsername}${counter}`)) counter++
+                  nombre_usuario = `${baseUsername}${counter}`
+                }
+
+                connection.query(
+                  'INSERT INTO usuarios (nombre_usuario, nombre, apellido, correo, contrasena, rol) VALUES (?, ?, ?, ?, ?, ?)',
+                  [nombre_usuario, nombre, apellido, correo, hashedPassword, 'alumno'],
+              (insertErr, insertResult) => {
+                if (insertErr) return rollback(insertErr)
+
+                const userId = insertResult.insertId
+                const matricula = `${new Date().getFullYear()}-${String(userId).padStart(6, '0')}`
+
+                if (carrera_id && plan_id) {
+                  connection.query(
+                    'INSERT INTO alumnos (id_alumno, matricula, plan_id, estatus_academico) VALUES (?, ?, ?, ?)',
+                    [userId, matricula, plan_id, 'inscrito'],
+                    (alumnoErr) => {
+                      if (alumnoErr) return rollback(alumnoErr)
+
+                      connection.query(
+                        'INSERT INTO alumno_carrera (alumno_id, carrera_id, activo) VALUES (?, ?, 1)',
+                        [userId, carrera_id],
+                        (carreraErr) => {
+                          if (carreraErr) return rollback(carreraErr)
+
+                          connection.commit((commitErr) => {
+                            if (commitErr) return rollback(commitErr)
+                            connection.release()
+                            return res.status(201).json({ message: 'Cuenta creada exitosamente.', id: userId })
+                          })
+                        }
+                      )
+                    }
+                  )
+                } else {
+                  connection.commit((commitErr) => {
+                    if (commitErr) return rollback(commitErr)
+                    connection.release()
+                    return res.status(201).json({
+                      message: 'Cuenta creada. Un coordinador debe asignar carrera y plan de estudio.',
+                      id: userId,
+                    })
+                  })
+                }
+              }
+            )
           }
         )
-      }
-    )
-  } catch (error) {
-    console.error('Error en registro:', error)
+        }
+      )
+      })
+    })
+  } catch {
     res.status(500).json({ message: 'No se pudo registrar la cuenta' })
   }
 })
 
-// Exportar router para usar en server.js
 export default router

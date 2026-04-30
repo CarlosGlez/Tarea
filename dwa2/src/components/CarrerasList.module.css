@@ -5,6 +5,8 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   animation: fadeSlideIn 0.35s ease both;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .title {

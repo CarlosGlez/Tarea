@@ -1,4 +1,6 @@
-const API = 'http://localhost:3000/api/anuncios'
+import { authHeaders, API_BASE } from "./api"
+
+const API = `${API_BASE}/api/anuncios`
 
 export interface Anuncio {
   id: number
@@ -19,13 +21,13 @@ export interface CrearAnuncioPayload {
 }
 
 export const getAnunciosAlumno = async (alumnoId: number): Promise<Anuncio[]> => {
-  const res = await fetch(`${API}?alumno_id=${alumnoId}`)
+  const res = await fetch(`${API}?alumno_id=${alumnoId}`, { headers: authHeaders() })
   if (!res.ok) throw new Error('Error cargando anuncios')
   return res.json()
 }
 
 export const getAnunciosCoordinador = async (coordinadorId: number): Promise<Anuncio[]> => {
-  const res = await fetch(`${API}?coordinador_id=${coordinadorId}`)
+  const res = await fetch(`${API}?coordinador_id=${coordinadorId}`, { headers: authHeaders() })
   if (!res.ok) throw new Error('Error cargando anuncios')
   return res.json()
 }
@@ -33,7 +35,7 @@ export const getAnunciosCoordinador = async (coordinadorId: number): Promise<Anu
 export const crearAnuncio = async (payload: CrearAnuncioPayload): Promise<{ id: number }> => {
   const res = await fetch(API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -45,7 +47,7 @@ export const crearAnuncio = async (payload: CrearAnuncioPayload): Promise<{ id: 
 
 export const getAnunciosNuevosCount = async (alumnoId: number, desde: string): Promise<number> => {
   try {
-    const res = await fetch(`${API}/nuevos-count?alumno_id=${alumnoId}&desde=${encodeURIComponent(desde)}`)
+    const res = await fetch(`${API}/nuevos-count?alumno_id=${alumnoId}&desde=${encodeURIComponent(desde)}`, { headers: authHeaders() })
     if (!res.ok) return 0
     const data = await res.json()
     return data.total ?? 0
@@ -55,6 +57,6 @@ export const getAnunciosNuevosCount = async (alumnoId: number, desde: string): P
 }
 
 export const eliminarAnuncio = async (id: number): Promise<void> => {
-  const res = await fetch(`${API}/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: authHeaders() })
   if (!res.ok) throw new Error('Error eliminando anuncio')
 }

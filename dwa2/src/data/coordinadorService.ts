@@ -77,13 +77,14 @@ export interface ActualizarAvanceMateriaPayload {
   periodo?: string | null
 }
 
-const API_URL = "http://localhost:3000/api"
+import { authHeaders, API_BASE } from "./api"
 
-// Obtener alumnos de la carrera del coordinador
+const API_URL = `${API_BASE}/api`
+
 export const getAlumnosByCarrera = async (carreraId: number | null): Promise<Alumno[]> => {
   try {
     const url = carreraId ? `${API_URL}/coordinador/alumnos?carrera_id=${carreraId}` : `${API_URL}/coordinador/alumnos`
-    const response = await fetch(url)
+    const response = await fetch(url, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching alumnos")
     return await response.json()
   } catch (error) {
@@ -92,10 +93,9 @@ export const getAlumnosByCarrera = async (carreraId: number | null): Promise<Alu
   }
 }
 
-// Obtener materias de la carrera del coordinador
 export const getMateriasByCarrera = async (carreraId: number): Promise<MateriaCarrera[]> => {
   try {
-    const response = await fetch(`${API_URL}/coordinador/materias?carrera_id=${carreraId}`)
+    const response = await fetch(`${API_URL}/coordinador/materias?carrera_id=${carreraId}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching materias")
     return await response.json()
   } catch (error) {
@@ -104,10 +104,9 @@ export const getMateriasByCarrera = async (carreraId: number): Promise<MateriaCa
   }
 }
 
-// Obtener horarios y secciones de la carrera
 export const getHorariosByCarrera = async (carreraId: number): Promise<Horario[]> => {
   try {
-    const response = await fetch(`${API_URL}/coordinador/horarios?carrera_id=${carreraId}`)
+    const response = await fetch(`${API_URL}/coordinador/horarios?carrera_id=${carreraId}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching horarios")
     return await response.json()
   } catch (error) {
@@ -116,34 +115,24 @@ export const getHorariosByCarrera = async (carreraId: number): Promise<Horario[]
   }
 }
 
-// Obtener estadísticas de la carrera
 export const getEstadisticasByCarrera = async (carreraId: number): Promise<Estadisticas> => {
   try {
-    const response = await fetch(`${API_URL}/coordinador/estadisticas?carrera_id=${carreraId}`)
+    const response = await fetch(`${API_URL}/coordinador/estadisticas?carrera_id=${carreraId}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching estadisticas")
     return await response.json()
   } catch (error) {
     console.error("Error en getEstadisticasByCarrera:", error)
-    return {
-      totalAlumnos: 0,
-      totalMaterias: 0,
-      totalSecciones: 0,
-      alumnosActivos: 0,
-    }
+    return { totalAlumnos: 0, totalMaterias: 0, totalSecciones: 0, alumnosActivos: 0 }
   }
 }
 
-// Obtener reporte de inscripciones
 export const getReporteInscripciones = async (
   carreraId: number,
   periodo?: string
 ): Promise<ReporteInscripcionItem[] | null> => {
   try {
-    const params = new URLSearchParams({
-      carrera_id: carreraId.toString(),
-      ...(periodo && { periodo }),
-    })
-    const response = await fetch(`${API_URL}/coordinador/reportes/inscripciones?${params}`)
+    const params = new URLSearchParams({ carrera_id: carreraId.toString(), ...(periodo && { periodo }) })
+    const response = await fetch(`${API_URL}/coordinador/reportes/inscripciones?${params}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching reporte")
     return await response.json()
   } catch (error) {
@@ -152,19 +141,14 @@ export const getReporteInscripciones = async (
   }
 }
 
-// Obtener reporte de rendimiento
 export const getReporteRendimiento = async (
   carreraId: number,
   semestre?: string,
   periodo?: string
 ): Promise<ReporteRendimientoItem[] | null> => {
   try {
-    const params = new URLSearchParams({
-      carrera_id: carreraId.toString(),
-      ...(semestre && { semestre }),
-      ...(periodo && { periodo }),
-    })
-    const response = await fetch(`${API_URL}/coordinador/reportes/rendimiento?${params}`)
+    const params = new URLSearchParams({ carrera_id: carreraId.toString(), ...(semestre && { semestre }), ...(periodo && { periodo }) })
+    const response = await fetch(`${API_URL}/coordinador/reportes/rendimiento?${params}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching reporte")
     return await response.json()
   } catch (error) {
@@ -173,17 +157,13 @@ export const getReporteRendimiento = async (
   }
 }
 
-// Obtener reporte de deserción
 export const getReporteDesercion = async (
   carreraId: number,
   anio?: string
 ): Promise<ReporteDesercion | null> => {
   try {
-    const params = new URLSearchParams({
-      carrera_id: carreraId.toString(),
-      ...(anio && { anio }),
-    })
-    const response = await fetch(`${API_URL}/coordinador/reportes/desercion?${params}`)
+    const params = new URLSearchParams({ carrera_id: carreraId.toString(), ...(anio && { anio }) })
+    const response = await fetch(`${API_URL}/coordinador/reportes/desercion?${params}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching reporte")
     return await response.json()
   } catch (error) {
@@ -192,19 +172,14 @@ export const getReporteDesercion = async (
   }
 }
 
-// Obtener reporte de aprobación
 export const getReporteAprobacion = async (
   carreraId: number,
   semestre?: string,
   periodo?: string
 ): Promise<ReporteAprobacionItem[] | null> => {
   try {
-    const params = new URLSearchParams({
-      carrera_id: carreraId.toString(),
-      ...(semestre && { semestre }),
-      ...(periodo && { periodo }),
-    })
-    const response = await fetch(`${API_URL}/coordinador/reportes/aprobacion?${params}`)
+    const params = new URLSearchParams({ carrera_id: carreraId.toString(), ...(semestre && { semestre }), ...(periodo && { periodo }) })
+    const response = await fetch(`${API_URL}/coordinador/reportes/aprobacion?${params}`, { headers: authHeaders() })
     if (!response.ok) throw new Error("Error fetching reporte")
     return await response.json()
   } catch (error) {
@@ -213,7 +188,6 @@ export const getReporteAprobacion = async (
   }
 }
 
-// Dar de baja a un alumno (transacción: UPDATE alumnos + INSERT bajas)
 export const registrarBaja = async (
   alumnoId: number,
   carreraId: number,
@@ -222,7 +196,7 @@ export const registrarBaja = async (
 ): Promise<void> => {
   const response = await fetch(`${API_URL}/coordinador/alumnos/${alumnoId}/baja`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ carrera_id: carreraId, registrado_por: registradoPor, motivo }),
   })
   if (!response.ok) {
@@ -231,7 +205,6 @@ export const registrarBaja = async (
   }
 }
 
-// Reinscribir a un alumno (transacción: UPDATE alumnos + INSERT inscripciones)
 export const registrarReinscripcion = async (
   alumnoId: number,
   carreraId: number,
@@ -240,7 +213,7 @@ export const registrarReinscripcion = async (
 ): Promise<void> => {
   const response = await fetch(`${API_URL}/coordinador/alumnos/${alumnoId}/reinscripcion`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ carrera_id: carreraId, registrado_por: registradoPor, periodo }),
   })
   if (!response.ok) {
@@ -249,7 +222,6 @@ export const registrarReinscripcion = async (
   }
 }
 
-// Actualizar avance de una materia para un alumno de la carrera
 export const updateAvanceMateriaAlumno = async (
   carreraId: number,
   alumnoId: number,
@@ -258,7 +230,7 @@ export const updateAvanceMateriaAlumno = async (
 ): Promise<void> => {
   const response = await fetch(`${API_URL}/coordinador/alumnos/${alumnoId}/materias/${materiaId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({
       carrera_id: carreraId,
       estatus: payload.estatus,
@@ -266,7 +238,6 @@ export const updateAvanceMateriaAlumno = async (
       periodo: payload.periodo ?? null,
     }),
   })
-
   if (!response.ok) {
     const errorData = await response.json().catch(() => null)
     throw new Error(errorData?.message || "No se pudo actualizar el avance de la materia")

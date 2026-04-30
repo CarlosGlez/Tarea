@@ -158,8 +158,15 @@
 }
 
 /* Tabla responsive */
+.tablaScroll {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
 .tabla {
   width: 100%;
+  min-width: max-content;
   border-collapse: collapse;
   margin-top: 20px;
   font-size: 14px;

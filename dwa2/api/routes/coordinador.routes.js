@@ -296,10 +296,10 @@ router.get('/reportes/rendimiento', (req, res) => {
   const params = [carrera_id]
   
   if (semestre) {
-    query += ` AND h.periodo LIKE ?`
-    params.push(`%SEMESTRE ${semestre}%`)
+    query += ` AND h.materia_id IN (SELECT id FROM materias WHERE semestre = ?)`
+    params.push(semestre)
   }
-  
+
   query += ` GROUP BY a.id_alumno ORDER BY promedio DESC`
   
   db.query(query, params, (err, results) => {

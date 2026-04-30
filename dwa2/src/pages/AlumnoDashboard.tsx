@@ -14,7 +14,8 @@ import { Pomeranio } from "../assets"
 
 const formatearFecha = (fecha?: string | null) => {
   if (!fecha) return 'No especificada'
-  return new Date(fecha).toLocaleDateString()
+  const [year, month, day] = fecha.split('T')[0].split('-').map(Number)
+  return new Date(year, month - 1, day).toLocaleDateString()
 }
 
 const formatearEstatus = (estatus?: string) => {

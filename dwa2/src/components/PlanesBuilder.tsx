@@ -11,7 +11,6 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import { CSS } from "@dnd-kit/utilities"
 import { useCarreras } from "../hooks/useCarreras"
 import {
   createMateria,
@@ -122,8 +121,7 @@ const DraggableMateriaCard = ({ materia, source, className, dropId, children }: 
   }
 
   const style = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.55 : 1,
+    opacity: isDragging ? 0 : 1,
   }
 
   return (

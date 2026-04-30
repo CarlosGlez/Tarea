@@ -1,4 +1,5 @@
-// Servicio para manejar peticiones de autenticación
+import { API_BASE } from "./api"
+
 // Tipos TypeScript para las respuestas de la API
 interface LoginResponse {
   token: string
@@ -33,7 +34,7 @@ export const loginRequest = async (
 
   // Hacer petición POST a la API
   const response = await fetch(
-    "http://localhost:3000/api/auth/login",
+    `${API_BASE}/api/auth/login`,
     {
       method: "POST",
       headers: {
@@ -54,7 +55,7 @@ export const loginRequest = async (
 
 export const registerRequest = async (payload: RegisterPayload): Promise<{ message: string; id: number }> => {
   const response = await fetch(
-    "http://localhost:3000/api/auth/register",
+    `${API_BASE}/api/auth/register`,
     {
       method: "POST",
       headers: {

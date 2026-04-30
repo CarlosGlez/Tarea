@@ -116,22 +116,28 @@ export const CoordinadorDashboard = () => {
 
   useEffect(() => {
     if (!alumnoSeleccionado) return
+    let cancelled = false
+    setCargandoDetalleAlumno(true)
 
     Promise.all([
       getAlumnoDatos(alumnoSeleccionado.id),
       getMateriasAlumno(alumnoSeleccionado.id),
     ])
       .then(([datos, materias]) => {
+        if (cancelled) return
         setDatosAlumnoDetalle(datos)
         setMateriasAlumnoDetalle(materias)
       })
       .catch((err) => {
+        if (cancelled) return
         console.error("Error cargando detalle del alumno:", err)
         setDatosAlumnoDetalle(null)
         setMateriasAlumnoDetalle([])
         setEdicionesMateria({})
       })
-      .finally(() => setCargandoDetalleAlumno(false))
+      .finally(() => { if (!cancelled) setCargandoDetalleAlumno(false) })
+
+    return () => { cancelled = true }
   }, [alumnoSeleccionado])
 
   useEffect(() => {
@@ -163,7 +169,6 @@ export const CoordinadorDashboard = () => {
   }
 
   const abrirDetalleAlumno = (alumno: Alumno) => {
-    setCargandoDetalleAlumno(true)
     setAlumnoSeleccionado(alumno)
     setVistaDetalleAlumno("plan")
     setSeccionActual("alumno_detalle")
@@ -284,10 +289,14 @@ export const CoordinadorDashboard = () => {
     { label: "Cerrar sesión", icon: "fa-sign-out-alt", onClick: handleLogout },
   ]
 
+  const menuSecciones = ["inicio", "alumnos", "carreras", "materias", "horarios", "reportes", "anuncios", "chat"]
+  const seccionParaMenu = seccionActual === "alumno_detalle" ? "alumnos" : seccionActual
+  const activeMenuIndex = menuSecciones.indexOf(seccionParaMenu)
+
   return (
     <div className={styles.container}>
       {/* Sidebar reutilizable */}
-      <Sidebar title="MiKardex - Coordinador" menuItems={menuItems} />
+      <Sidebar title="MiKardex - Coordinador" menuItems={menuItems} activeIndex={activeMenuIndex} />
 
       {/* Contenido principal */}
       <div className={styles.contenido}>
@@ -566,32 +575,34 @@ export const CoordinadorDashboard = () => {
             {cargandoMaterias ? (
               <p className={styles.loadingState}>Cargando materias...</p>
             ) : materias.length > 0 ? (
-              <table className={styles.tabla}>
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Nombre de la Materia</th>
-                    <th>Créditos</th>
-                    <th>Bloque</th>
-                    <th>Semestre sugerido</th>
-                    <th>Origen</th>
-                    <th>Minor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {materias.map((materia) => (
-                    <tr key={`${materia.id}-${materia.origen_oferta}-${materia.minor_nombre || "base"}`}>
-                      <td>{materia.codigo}</td>
-                      <td>{materia.nombre}</td>
-                      <td>{materia.creditos}</td>
-                      <td>{materia.tipo_bloque}</td>
-                      <td>{materia.semestre ?? "Sin definir"}</td>
-                      <td>{materia.origen_oferta === "plan_fijo" ? "Plan fijo" : materia.origen_oferta === "minor" ? "Minor" : "Oferta carrera"}</td>
-                      <td>{materia.minor_nombre || "-"}</td>
+              <div className={styles.tablaScroll}>
+                <table className={styles.tabla}>
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Nombre de la Materia</th>
+                      <th>Créditos</th>
+                      <th>Bloque</th>
+                      <th>Semestre sugerido</th>
+                      <th>Origen</th>
+                      <th>Minor</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {materias.map((materia) => (
+                      <tr key={`${materia.id}-${materia.origen_oferta}-${materia.minor_nombre || "base"}`}>
+                        <td>{materia.codigo}</td>
+                        <td>{materia.nombre}</td>
+                        <td>{materia.creditos}</td>
+                        <td>{materia.tipo_bloque}</td>
+                        <td>{materia.semestre ?? "Sin definir"}</td>
+                        <td>{materia.origen_oferta === "plan_fijo" ? "Plan fijo" : materia.origen_oferta === "minor" ? "Minor" : "Oferta carrera"}</td>
+                        <td>{materia.minor_nombre || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p className={styles.emptyState}>No hay materias disponibles para esta carrera.</p>
             )}
@@ -607,32 +618,34 @@ export const CoordinadorDashboard = () => {
             {cargandoHorarios ? (
               <p className={styles.loadingState}>Cargando horarios...</p>
             ) : horarios.length > 0 ? (
-              <table className={styles.tabla}>
-                <thead>
-                  <tr>
-                    <th>Materia</th>
-                    <th>Sección</th>
-                    <th>Profesor</th>
-                    <th>Hora Inicio</th>
-                    <th>Hora Fin</th>
-                    <th>Aula</th>
-                    <th>Días</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {horarios.map((horario) => (
-                    <tr key={horario.id}>
-                      <td>{horario.materia_nombre}</td>
-                      <td>{horario.seccion}</td>
-                      <td>{horario.profesor_nombre}</td>
-                      <td>{horario.hora_inicio}</td>
-                      <td>{horario.hora_fin}</td>
-                      <td>{horario.aula}</td>
-                      <td>{horario.dias}</td>
+              <div className={styles.tablaScroll}>
+                <table className={styles.tabla}>
+                  <thead>
+                    <tr>
+                      <th>Materia</th>
+                      <th>Sección</th>
+                      <th>Profesor</th>
+                      <th>Hora Inicio</th>
+                      <th>Hora Fin</th>
+                      <th>Aula</th>
+                      <th>Días</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {horarios.map((horario) => (
+                      <tr key={horario.id}>
+                        <td>{horario.materia_nombre}</td>
+                        <td>{horario.seccion}</td>
+                        <td>{horario.profesor_nombre}</td>
+                        <td>{horario.hora_inicio}</td>
+                        <td>{horario.hora_fin}</td>
+                        <td>{horario.aula}</td>
+                        <td>{horario.dias}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p className={styles.emptyState}>No hay horarios disponibles para esta carrera.</p>
             )}
@@ -645,15 +658,6 @@ export const CoordinadorDashboard = () => {
             <h1>Anuncios</h1>
             <p>Publica comunicados para los alumnos de una carrera específica o de todas las carreras.</p>
             <Anuncios usuarioId={usuario.id} rol="coordinador" />
-          </div>
-        )}
-
-        {/* Sección de Chat */}
-        {seccionActual === "chat" && usuario && (
-          <div className={styles.seccion}>
-            <h1>Chat con Alumnos</h1>
-            <p>Revisa y responde los mensajes de los alumnos de tu carrera.</p>
-            <Chat usuarioId={usuario.id} rol="coordinador" />
           </div>
         )}
 
@@ -819,6 +823,15 @@ export const CoordinadorDashboard = () => {
           </div>
         )}
         </SectionTransition>
+
+        {/* Chat siempre montado para no perder estado de conversación ni polling */}
+        {usuario && (
+          <div className={styles.seccion} style={{ display: seccionActual === "chat" ? undefined : "none" }}>
+            <h1>Chat con Alumnos</h1>
+            <p>Revisa y responde los mensajes de los alumnos de tu carrera.</p>
+            <Chat usuarioId={usuario.id} rol="coordinador" />
+          </div>
+        )}
       </div>
     </div>
   )
