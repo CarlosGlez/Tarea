@@ -1,6 +1,6 @@
-import Plan2020 from './plan2020.png';
+import Plan2020 from './Plan2020.png';
 import Pomeranio from './POMERANIO.jpg';
-import Sol from './sol.png';
+import Sol from './Sol.png';
 
 
 export {
