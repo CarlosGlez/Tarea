@@ -103,7 +103,7 @@ interface DraggableMateriaCardProps {
 }
 
 const DraggableMateriaCard = ({ materia, source, className, dropId, children }: DraggableMateriaCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `${source}-${materia.id}`,
     data: {
       materiaId: materia.id,
