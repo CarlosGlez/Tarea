@@ -7,7 +7,7 @@ import { PlanesBuilder } from "../components/PlanesBuilder"
 import { StudyPlanProgress } from "../components/StudyPlanProgress"
 import { Chat } from "../components/Chat"
 import { Anuncios } from "../components/Anuncios"
-import { useAlumnosByCarrera, useMateriasByCarrera, useHorariosByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
+import { useAlumnosByCarrera, useMateriasByCarrera, useEstadisticasByCarrera } from "../hooks/useCoordinador"
 import { Reportes } from "../components/Reportes"
 import * as coordinadorService from "../data/coordinadorService"
 import type { EstatusMateria, ReporteInscripcionItem, ReporteRendimientoItem, ReporteDesercion, ReporteAprobacionItem } from "../data/coordinadorService"
@@ -107,9 +107,7 @@ export const CoordinadorDashboard = () => {
   const { materias, cargando: cargandoMaterias } = useMateriasByCarrera(
     usuario?.carrera_id || null
   )
-  const { horarios, cargando: cargandoHorarios } = useHorariosByCarrera(
-    usuario?.carrera_id || null
-  )
+
   const { estadisticas, cargando: cargandoEstadisticas } = useEstadisticasByCarrera(
     usuario?.carrera_id || null
   )
