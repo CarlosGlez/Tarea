@@ -5,7 +5,13 @@ import bcrypt from 'bcryptjs'
 const router = express.Router()
 
 router.get('/', (req, res) => {
-  db.query('SELECT id, nombre_usuario, nombre, apellido, correo, rol, fecha_creacion FROM usuarios', (err, results) => {
+  const query = `
+    SELECT u.id, u.nombre_usuario, u.nombre, u.apellido, u.correo, u.rol, u.fecha_creacion
+    FROM usuarios u
+    LEFT JOIN alumnos a ON u.id = a.id_alumno AND u.rol = 'alumno'
+    WHERE NOT (u.rol = 'alumno' AND a.estatus_academico = 'baja')
+  `
+  db.query(query, (err, results) => {
     if (err) return res.status(500).json(err)
     res.json(results)
   })
@@ -53,11 +59,19 @@ router.post('/', async (req, res) => {
                   (carreraErr) => {
                     if (carreraErr) return rollback(carreraErr)
 
-                    connection.commit((commitErr) => {
-                      if (commitErr) return rollback(commitErr)
-                      connection.release()
-                      res.json({ id: userId, message: 'Alumno creado y asignado a carrera' })
-                    })
+                    connection.query(
+                      'INSERT INTO inscripciones (alumno_id, carrera_id) VALUES (?, ?)',
+                      [userId, carrera_id],
+                      (inscErr) => {
+                        if (inscErr) return rollback(inscErr)
+
+                        connection.commit((commitErr) => {
+                          if (commitErr) return rollback(commitErr)
+                          connection.release()
+                          res.json({ id: userId, message: 'Alumno creado y asignado a carrera' })
+                        })
+                      }
+                    )
                   }
                 )
               }
@@ -117,56 +131,88 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const { id } = req.params
-  db.getConnection((connectionErr, connection) => {
-    if (connectionErr) return res.status(500).json(connectionErr)
 
-    connection.beginTransaction((txErr) => {
-      if (txErr) {
-        connection.release()
-        return res.status(500).json(txErr)
-      }
+  db.query('SELECT rol FROM usuarios WHERE id = ?', [id], (checkErr, checkRows) => {
+    if (checkErr) return res.status(500).json(checkErr)
+    if (!checkRows.length) return res.status(404).json({ message: 'Usuario no encontrado' })
 
-      const rollback = (error) => {
-        connection.rollback(() => {
-          connection.release()
-          return res.status(500).json(error)
+    const { rol } = checkRows[0]
+
+    if (rol === 'alumno') {
+      // Soft-delete: registrar baja y ocultar al alumno sin borrar datos históricos
+      db.getConnection((connErr, connection) => {
+        if (connErr) return res.status(500).json(connErr)
+
+        connection.beginTransaction((txErr) => {
+          if (txErr) { connection.release(); return res.status(500).json(txErr) }
+
+          const rollback = (error) => {
+            connection.rollback(() => { connection.release(); return res.status(500).json(error) })
+          }
+
+          connection.query(
+            'INSERT INTO bajas (alumno_id, motivo) VALUES (?, ?)',
+            [id, 'Eliminado del sistema por administrador'],
+            (err1) => {
+              if (err1) return rollback(err1)
+
+              connection.query(
+                "UPDATE alumnos SET estatus_academico = 'baja' WHERE id_alumno = ?",
+                [id],
+                (err2) => {
+                  if (err2) return rollback(err2)
+
+                  connection.query(
+                    'UPDATE alumno_carrera SET activo = 0 WHERE alumno_id = ?',
+                    [id],
+                    (err3) => {
+                      if (err3) return rollback(err3)
+
+                      connection.commit((commitErr) => {
+                        if (commitErr) return rollback(commitErr)
+                        connection.release()
+                        return res.json({ message: 'Alumno dado de baja' })
+                      })
+                    }
+                  )
+                }
+              )
+            }
+          )
         })
-      }
+      })
+    } else {
+      // Hard-delete para coordinadores y admins
+      db.getConnection((connectionErr, connection) => {
+        if (connectionErr) return res.status(500).json(connectionErr)
 
-      connection.query('DELETE FROM historial_academico WHERE alumno_id = ?', [id], (err) => {
-        if (err) return rollback(err)
+        connection.beginTransaction((txErr) => {
+          if (txErr) { connection.release(); return res.status(500).json(txErr) }
 
-        connection.query('DELETE FROM enrolamiento WHERE alumno_id = ?', [id], (err2) => {
-          if (err2) return rollback(err2)
+          const rollback = (error) => {
+            connection.rollback(() => { connection.release(); return res.status(500).json(error) })
+          }
 
-          connection.query('DELETE FROM alumno_carrera WHERE alumno_id = ?', [id], (err3) => {
-            if (err3) return rollback(err3)
+          connection.query('DELETE FROM coordinador_carrera WHERE coordinador_id = ?', [id], (err1) => {
+            if (err1) return rollback(err1)
 
-            connection.query('DELETE FROM alumnos WHERE id_alumno = ?', [id], (err4) => {
-              if (err4) return rollback(err4)
+            connection.query('DELETE FROM coordinadores WHERE id_coordinador = ?', [id], (err2) => {
+              if (err2) return rollback(err2)
 
-              connection.query('DELETE FROM coordinador_carrera WHERE coordinador_id = ?', [id], (err5) => {
-                if (err5) return rollback(err5)
+              connection.query('DELETE FROM usuarios WHERE id = ?', [id], (err3) => {
+                if (err3) return rollback(err3)
 
-                connection.query('DELETE FROM coordinadores WHERE id_coordinador = ?', [id], (err6) => {
-                  if (err6) return rollback(err6)
-
-                  connection.query('DELETE FROM usuarios WHERE id = ?', [id], (err7) => {
-                    if (err7) return rollback(err7)
-
-                    connection.commit((commitErr) => {
-                      if (commitErr) return rollback(commitErr)
-                      connection.release()
-                      return res.json({ message: 'Usuario eliminado' })
-                    })
-                  })
+                connection.commit((commitErr) => {
+                  if (commitErr) return rollback(commitErr)
+                  connection.release()
+                  return res.json({ message: 'Usuario eliminado' })
                 })
               })
             })
           })
         })
       })
-    })
+    }
   })
 })
 

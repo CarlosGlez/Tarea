@@ -614,41 +614,15 @@ export const CoordinadorDashboard = () => {
           <div className={styles.seccion}>
             <h1>Horarios y Secciones</h1>
             <p>Consulta y administra los horarios de clases y secciones de la carrera.</p>
-            
-            {cargandoHorarios ? (
-              <p className={styles.loadingState}>Cargando horarios...</p>
-            ) : horarios.length > 0 ? (
-              <div className={styles.tablaScroll}>
-                <table className={styles.tabla}>
-                  <thead>
-                    <tr>
-                      <th>Materia</th>
-                      <th>Sección</th>
-                      <th>Profesor</th>
-                      <th>Hora Inicio</th>
-                      <th>Hora Fin</th>
-                      <th>Aula</th>
-                      <th>Días</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {horarios.map((horario) => (
-                      <tr key={horario.id}>
-                        <td>{horario.materia_nombre}</td>
-                        <td>{horario.seccion}</td>
-                        <td>{horario.profesor_nombre}</td>
-                        <td>{horario.hora_inicio}</td>
-                        <td>{horario.hora_fin}</td>
-                        <td>{horario.aula}</td>
-                        <td>{horario.dias}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className={styles.enDesarrolloContainer}>
+              <div className={styles.enDesarrolloBadge}>
+                <i className="fas fa-tools" style={{ marginRight: "0.5rem" }}></i>
+                En Desarrollo
               </div>
-            ) : (
-              <p className={styles.emptyState}>No hay horarios disponibles para esta carrera.</p>
-            )}
+              <p className={styles.enDesarrolloMsg}>
+                Esta sección se encuentra actualmente en desarrollo. Próximamente podrás consultar y administrar los horarios de clases desde aquí.
+              </p>
+            </div>
           </div>
         )}
 

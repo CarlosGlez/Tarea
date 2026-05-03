@@ -32,8 +32,18 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 .table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   margin-top: 16px;
   font-size: 14px;
@@ -41,9 +51,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
   transition: box-shadow 0.3s ease;
-  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .table:hover {
@@ -147,4 +155,63 @@
   color: var(--color-text-muted);
   text-align: right;
   transition: color 0.3s ease;
+}
+
+/* Skeleton loader */
+.skeletonWrapper {
+  margin-top: 20px;
+  animation: fadeSlideIn 0.3s ease both;
+}
+
+.skeletonTitle {
+  height: 24px;
+  width: 220px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-border) 20%, var(--color-surface-muted) 50%, var(--color-border) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite linear;
+  margin-bottom: 16px;
+}
+
+.skeletonTable {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.skeletonHeader {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-surface-muted);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.skeletonHeaderCell {
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-border) 20%, var(--color-surface) 50%, var(--color-border) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite linear;
+}
+
+.skeletonRow {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.skeletonRow:last-child {
+  border-bottom: none;
+}
+
+.skeletonCell {
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-border) 20%, var(--color-surface-muted) 50%, var(--color-border) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite linear;
 }

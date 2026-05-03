@@ -53,7 +53,25 @@ export const Reportes = ({
   const datosPaginados = datos.slice(startIndex, endIndex)
 
   if (cargando) {
-    return <div className={styles.statusBox}>Cargando {titulo.toLowerCase()}...</div>
+    return (
+      <div className={styles.skeletonWrapper}>
+        <div className={styles.skeletonTitle} />
+        <div className={styles.skeletonTable}>
+          <div className={styles.skeletonHeader}>
+            {columnas.map((_, i) => (
+              <div key={i} className={styles.skeletonHeaderCell} />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={styles.skeletonRow}>
+              {columnas.map((_, j) => (
+                <div key={j} className={styles.skeletonCell} style={{ animationDelay: `${i * 0.08}s` }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (error) {
@@ -72,6 +90,7 @@ export const Reportes = ({
     <div className={styles.wrapper}>
       <h2 className={styles.title}>{titulo}</h2>
 
+      <div className={styles.tableScroll}>
       <table className={styles.table}>
         <thead className={styles.tableHead}>
           <tr>
@@ -94,6 +113,7 @@ export const Reportes = ({
           ))}
         </tbody>
       </table>
+      </div>
 
       {paginacion && totalPaginas > 1 && (
         <div className={styles.pagination}>

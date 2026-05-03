@@ -244,12 +244,18 @@ router.get('/reportes/inscripciones', (req, res) => {
       u.apellido,
       a.matricula,
       a.generacion,
-      i.periodo,
-      i.fecha_inscripcion
-    FROM inscripciones i
-    JOIN alumnos a  ON i.alumno_id = a.id_alumno
-    JOIN usuarios u ON a.id_alumno = u.id
-    WHERE i.carrera_id = ?
+      IFNULL(i.periodo, '-')                               AS periodo,
+      IFNULL(i.fecha_inscripcion, u.fecha_creacion)        AS fecha_inscripcion
+    FROM alumno_carrera ac
+    JOIN alumnos  a ON ac.alumno_id  = a.id_alumno
+    JOIN usuarios u ON a.id_alumno   = u.id
+    LEFT JOIN (
+      SELECT alumno_id, carrera_id, MIN(id) AS primera_id
+      FROM inscripciones
+      GROUP BY alumno_id, carrera_id
+    ) pri ON pri.alumno_id = ac.alumno_id AND pri.carrera_id = ac.carrera_id
+    LEFT JOIN inscripciones i ON i.id = pri.primera_id
+    WHERE ac.carrera_id = ? AND ac.activo = 1
   `
 
   const params = [carrera_id]
@@ -259,7 +265,7 @@ router.get('/reportes/inscripciones', (req, res) => {
     params.push(periodo)
   }
 
-  query += ` ORDER BY i.fecha_inscripcion DESC`
+  query += ` ORDER BY IFNULL(i.fecha_inscripcion, u.fecha_creacion) DESC`
 
   db.query(query, params, (err, results) => {
     if (err) {
