@@ -16,7 +16,7 @@ export const useAuth = () => {
       const data = await loginRequest(nombre_usuario, password)
 
       // Guardar datos en localStorage
-      localStorage.setItem("token", data.token)
+      sessionStorage.setItem("token", data.token)
       localStorage.setItem("rol", data.usuario.rol)
       localStorage.setItem("nombre", data.usuario.nombre_usuario)
       localStorage.setItem("userId", String(data.usuario.id))

@@ -159,7 +159,7 @@ export const CoordinadorDashboard = () => {
 
   // Función para logout
   const handleLogout = () => {
-    localStorage.removeItem("token")
+    sessionStorage.removeItem("token")
     localStorage.removeItem("rol")
     localStorage.removeItem("nombre")
     localStorage.removeItem("userId")

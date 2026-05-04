@@ -22,7 +22,7 @@ function App() {
       // Obtener hash actual (ej: "#/alumno")
       const hash = window.location.hash.slice(1) // Remover #
       // Verificar si hay token de autenticación
-      const token = localStorage.getItem("token")
+      const token = sessionStorage.getItem("token")
 
       // Si no hay token, mostrar login
       if (!token) {
