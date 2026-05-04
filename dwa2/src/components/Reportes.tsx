@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import styles from "./Reportes.module.css"
 
 export interface ReporteItem {
@@ -28,8 +28,51 @@ export const Reportes = ({
   paginacion = false,
 }: ReportesProps) => {
   const [paginaActual, setPaginaActual] = useState(1)
+  const [busqueda, setBusqueda] = useState("")
+  const [sortClave, setSortClave] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
+
   const itemsPorPagina = 10
-  const totalPaginas = Math.ceil(datos.length / itemsPorPagina)
+
+  const handleSort = (clave: string) => {
+    if (sortClave === clave) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+    } else {
+      setSortClave(clave)
+      setSortDir("asc")
+    }
+    setPaginaActual(1)
+  }
+
+  const datosFiltrados = useMemo(() => {
+    let resultado = [...datos]
+
+    if (busqueda.trim()) {
+      const q = busqueda.toLowerCase()
+      resultado = resultado.filter((item) =>
+        columnas.some((col) => String(item[col.clave] ?? "").toLowerCase().includes(q))
+      )
+    }
+
+    if (sortClave) {
+      resultado.sort((a, b) => {
+        const va = a[sortClave]
+        const vb = b[sortClave]
+        const na = typeof va === "number" ? va : String(va ?? "").toLowerCase()
+        const nb = typeof vb === "number" ? vb : String(vb ?? "").toLowerCase()
+        if (na < nb) return sortDir === "asc" ? -1 : 1
+        if (na > nb) return sortDir === "asc" ? 1 : -1
+        return 0
+      })
+    }
+
+    return resultado
+  }, [datos, busqueda, sortClave, sortDir, columnas])
+
+  const totalPaginas = Math.ceil(datosFiltrados.length / itemsPorPagina)
+  const startIndex = (paginaActual - 1) * itemsPorPagina
+  const endIndex = startIndex + itemsPorPagina
+  const datosPaginados = datosFiltrados.slice(startIndex, endIndex)
 
   const renderValor = (valor: unknown, tipo: string = "texto") => {
     switch (tipo) {
@@ -47,10 +90,6 @@ export const Reportes = ({
         return String(valor ?? "-")
     }
   }
-
-  const startIndex = (paginaActual - 1) * itemsPorPagina
-  const endIndex = startIndex + itemsPorPagina
-  const datosPaginados = datos.slice(startIndex, endIndex)
 
   if (cargando) {
     return (
@@ -88,31 +127,71 @@ export const Reportes = ({
 
   return (
     <div className={styles.wrapper}>
-      <h2 className={styles.title}>{titulo}</h2>
+      <div className={styles.toolbar}>
+        <h2 className={styles.title}>{titulo}</h2>
+        <div className={styles.searchBox}>
+          <i className="fas fa-search" />
+          <input
+            type="text"
+            placeholder="Buscar en resultados..."
+            value={busqueda}
+            onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1) }}
+            className={styles.searchInput}
+          />
+          {busqueda && (
+            <button className={styles.clearBtn} onClick={() => { setBusqueda(""); setPaginaActual(1) }}>
+              <i className="fas fa-times" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {busqueda && (
+        <p className={styles.searchInfo}>
+          {datosFiltrados.length} resultado{datosFiltrados.length !== 1 ? "s" : ""} para &quot;{busqueda}&quot;
+        </p>
+      )}
 
       <div className={styles.tableScroll}>
-      <table className={styles.table}>
-        <thead className={styles.tableHead}>
-          <tr>
-            {columnas.map((col) => (
-              <th key={col.clave} className={styles.tableHeaderCell}>
-                {col.etiqueta}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {datosPaginados.map((item, index) => (
-            <tr key={item.id || index} className={styles.tableRow}>
+        <table className={styles.table}>
+          <thead className={styles.tableHead}>
+            <tr>
               {columnas.map((col) => (
-                <td key={col.clave} className={styles.tableCell}>
-                  {renderValor(item[col.clave], col.tipo)}
-                </td>
+                <th
+                  key={col.clave}
+                  className={`${styles.tableHeaderCell} ${styles.tableHeaderCellSortable}`}
+                  onClick={() => handleSort(col.clave)}
+                >
+                  <span>{col.etiqueta}</span>
+                  <span className={styles.sortIcon}>
+                    {sortClave === col.clave
+                      ? sortDir === "asc" ? " ↑" : " ↓"
+                      : " ↕"}
+                  </span>
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {datosPaginados.length === 0 ? (
+              <tr>
+                <td colSpan={columnas.length} className={styles.noResults}>
+                  Sin resultados para &quot;{busqueda}&quot;
+                </td>
+              </tr>
+            ) : (
+              datosPaginados.map((item, index) => (
+                <tr key={item.id || index} className={styles.tableRow}>
+                  {columnas.map((col) => (
+                    <td key={col.clave} className={styles.tableCell}>
+                      {renderValor(item[col.clave], col.tipo)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {paginacion && totalPaginas > 1 && (
@@ -150,8 +229,8 @@ export const Reportes = ({
       )}
 
       <div className={styles.footerNote}>
-        Mostrando {startIndex + 1} a {Math.min(endIndex, datos.length)} de {datos.length}{" "}
-        registros
+        Mostrando {datosFiltrados.length === 0 ? 0 : startIndex + 1} a {Math.min(endIndex, datosFiltrados.length)} de {datosFiltrados.length}{" "}
+        {datosFiltrados.length !== datos.length && `(filtrado de ${datos.length} total)`}
       </div>
     </div>
   )

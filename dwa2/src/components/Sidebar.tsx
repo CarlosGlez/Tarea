@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { ThemeToggle } from "./ThemeToggle"
+import { useTheme } from "../contexts/ThemeContext"
+import { Sol } from "../assets"
 import styles from "./Sidebar.module.css"
 
 interface SidebarProps {
@@ -18,12 +20,26 @@ export const Sidebar = ({ title, menuItems, activeIndex: activeIndexProp }: Side
   const [activeIndexLocal, setActiveIndexLocal] = useState(0)
   const activeIndex = activeIndexProp !== undefined ? activeIndexProp : activeIndexLocal
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [fabHidden, setFabHidden] = useState(false)
+  const { theme, toggleTheme } = useTheme()
   const fabMenuRef = useRef<HTMLDivElement>(null)
+  const lastScrollY = useRef(0)
 
   useEffect(() => {
     if (isMobileOpen && fabMenuRef.current) {
       fabMenuRef.current.scrollTop = fabMenuRef.current.scrollHeight
     }
+  }, [isMobileOpen])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isMobileOpen) return
+      const current = window.scrollY
+      setFabHidden(current > lastScrollY.current && current > 60)
+      lastScrollY.current = current
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [isMobileOpen])
 
   return (
@@ -113,14 +129,22 @@ export const Sidebar = ({ title, menuItems, activeIndex: activeIndexProp }: Side
             style={{ '--item-delay': '0s' } as React.CSSProperties}
           >
             <span className={styles.fabItemLabel}>Tema</span>
-            <div className={styles.fabItemTheme}>
-              <ThemeToggle />
-            </div>
+            <button
+              className={styles.fabItemBtn}
+              onClick={toggleTheme}
+              aria-label="Cambiar tema"
+              title={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
+            >
+              {theme === 'light'
+                ? <i className="fas fa-moon" />
+                : <img src={Sol} alt="Sol" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+              }
+            </button>
           </div>
         </div>
 
         <button
-          className={`${styles.fab} ${isMobileOpen ? styles.fabOpen : ''}`}
+          className={`${styles.fab} ${isMobileOpen ? styles.fabOpen : ''} ${fabHidden ? styles.fabHidden : ''}`}
           onClick={() => setIsMobileOpen(!isMobileOpen)}
           aria-label="Toggle menu"
         >

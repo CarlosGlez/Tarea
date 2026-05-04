@@ -10,7 +10,6 @@ import { getAlumnoDatos, type AlumnoDatos } from "../data/usuariosService"
 import { getChatSinLeerTotal } from "../data/chatService"
 import { getAnunciosNuevosCount } from "../data/anunciosService"
 import styles from "./AlumnoDashboard.module.css"
-import { Pomeranio } from "../assets"
 
 const formatearFecha = (fecha?: string | null) => {
   if (!fecha) return 'No especificada'
@@ -130,11 +129,10 @@ export const AlumnoDashboard = () => {
             <p>Este es tu panel de control como alumno.</p>
             {usuario && (
               <div className={styles.datosUsuario}>
-                <img
-                  src={usuario.imagen_url || Pomeranio}
-                  alt="Foto del alumno"
-                  className={styles.avatar}
-                />
+                {usuario.imagen_url
+                  ? <img src={usuario.imagen_url} alt="Foto del alumno" className={styles.avatar} />
+                  : <div className={styles.avatarFallback}><i className="fas fa-user" /></div>
+                }
                 <p><strong>Nombre completo:</strong> {usuario.nombre} {usuario.apellido}</p>
                 <p><strong>Correo:</strong> {usuario.correo}</p>
                 <p>
@@ -193,7 +191,7 @@ export const AlumnoDashboard = () => {
                 carrera: usuario?.carrera_nombre || "Carrera no especificada",
                 plan: usuario?.plan_estudios || "Plan no especificado",
                 estatus: formatearEstatus(usuario?.estatus_academico),
-                avatarUrl: usuario?.imagen_url || Pomeranio,
+                avatarUrl: usuario?.imagen_url || null,
               }}
               emptyMessage="Todavia no hay materias cargadas para mostrar tu plan de estudios."
             />

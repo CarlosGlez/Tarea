@@ -211,6 +211,12 @@
   transform: rotate(90deg) scale(1.05);
 }
 
+.fab.fabHidden {
+  transform: translateY(90px);
+  opacity: 0;
+  pointer-events: none;
+}
+
 .fabOverlay {
   position: fixed;
   inset: 0;

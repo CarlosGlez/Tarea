@@ -67,6 +67,9 @@ router.get('/info', (req, res) => {
 
 // GET /api/coordinador/alumnos - Obtener alumnos de la carrera del coordinador
 router.get('/alumnos', (req, res) => {
+  if (req.user.rol !== 'coordinador' && req.user.rol !== 'admin') {
+    return res.status(403).json({ message: 'Acceso no autorizado' })
+  }
   const { carrera_id } = req.query
 
   let query = `

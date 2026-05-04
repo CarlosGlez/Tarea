@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useUsuarios } from "../hooks/useUsuarios"
 import type { Usuario } from "../types/Usuario"
 import type { Alumno, Carrera, PlanEstudio } from "../types/Carrera"
@@ -45,11 +46,15 @@ export const UsuariosList = ({
   const [guardandoPrograma, setGuardandoPrograma] = useState(false)
   const [formData, setFormData] = useState({
     nombre_usuario: '',
+    nombre: '',
+    apellido: '',
     correo: '',
     contrasena: '',
     rol: 'alumno',
     carrera_id: '',
-    plan_id: ''
+    plan_id: '',
+    numero_telefono: '',
+    imagen_url: ''
   })
   const [datosPersonalesForm, setDatosPersonalesForm] = useState<Record<string, string | number | undefined>>({})
   const [programaForm, setProgramaForm] = useState({
@@ -138,8 +143,11 @@ export const UsuariosList = ({
       contrasena: '',
       rol: user.rol,
       carrera_id: '',
-      plan_id: ''
+      plan_id: '',
+      numero_telefono: '',
+      imagen_url: ''
     })
+    
     setProgramaForm({
       carrera_id: carreraActual,
       plan_id: planActual,
@@ -150,13 +158,17 @@ export const UsuariosList = ({
   const handleCreateNew = () => {
     setEditingUser(null)
     setShowPassword(false)
-    setFormData({ 
-      nombre_usuario: '', 
-      correo: '', 
-      contrasena: '', 
+    setFormData({
+      nombre_usuario: '',
+      nombre: '',
+      apellido: '',
+      correo: '',
+      contrasena: '',
       rol: 'alumno',
       carrera_id: '',
-      plan_id: ''
+      plan_id: '',
+      numero_telefono: '',
+      imagen_url: ''
     })
     setModalOpen(true)
   }
@@ -177,7 +189,27 @@ export const UsuariosList = ({
     setModalOpen(false)
     setShowPassword(false)
     setEditingUser(null)
-    setFormData({ nombre_usuario: '', correo: '', contrasena: '', rol: 'alumno', carrera_id: '', plan_id: '' })
+    setFormData({ nombre_usuario: '', nombre: '', apellido: '', correo: '', contrasena: '', rol: 'alumno', carrera_id: '', plan_id: '', numero_telefono: '', imagen_url: '' })
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'form' | 'datosPersonales') => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 800 * 1024) {
+      alert('La imagen no puede superar 800 KB')
+      e.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64 = reader.result as string
+      if (target === 'form') {
+        setFormData(prev => ({ ...prev, imagen_url: base64 }))
+      } else {
+        setDatosPersonalesForm(prev => ({ ...prev, imagen_url: base64 }))
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   const closeDatosPersonalesModal = () => {
@@ -253,6 +285,7 @@ export const UsuariosList = ({
       setDatosPersonalesForm({
         nombre: datos.nombre || '',
         apellido: datos.apellido || '',
+        imagen_url: datos.imagen_url || '',
         ...(editingUser.rol === 'alumno' && {
           numero_telefono: datos.numero_telefono || '',
           numero_identificacion: datos.numero_identificacion || '',
@@ -329,7 +362,7 @@ export const UsuariosList = ({
       )}
 
       {/* Modal para crear o editar usuario */}
-      {modalOpen && (
+      {modalOpen && createPortal(
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -350,6 +383,68 @@ export const UsuariosList = ({
                   required
                 />
               </div>
+
+              {!editingUser && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="nombre">Nombre:</label>
+                    <input
+                      id="nombre"
+                      type="text"
+                      placeholder="Nombre(s)"
+                      value={formData.nombre}
+                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="apellido">Apellido:</label>
+                    <input
+                      id="apellido"
+                      type="text"
+                      placeholder="Apellido(s)"
+                      value={formData.apellido}
+                      onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  {formData.rol === 'alumno' && (
+                    <div className={styles.formGroup}>
+                      <label htmlFor="numero_telefono">Teléfono:</label>
+                      <input
+                        id="numero_telefono"
+                        type="tel"
+                        placeholder="Número de teléfono (opcional)"
+                        value={formData.numero_telefono}
+                        onChange={(e) => setFormData({ ...formData, numero_telefono: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {formData.rol === 'alumno' && (
+                    <div className={styles.formGroup}>
+                      <label htmlFor="imagen_url">Foto de perfil (opcional):</label>
+                      {formData.imagen_url && (
+                        <div style={{ marginBottom: 8 }}>
+                          <img
+                            src={formData.imagen_url}
+                            alt="Preview"
+                            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }}
+                          />
+                        </div>
+                      )}
+                      <input
+                        id="imagen_url"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageChange(e, 'form')}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
 
               <div className={styles.formGroup}>
                 <label htmlFor="correo">Correo Electrónico:</label>
@@ -480,10 +575,10 @@ export const UsuariosList = ({
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Modal para cambiar carrera/plan del alumno */}
-      {programaOpen && editingUser?.rol === 'alumno' && (
+      {programaOpen && editingUser?.rol === 'alumno' && createPortal(
         <div className={styles.modalOverlay} onClick={closeProgramaModal}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -571,10 +666,10 @@ export const UsuariosList = ({
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Modal para editar datos personales */}
-      {datosPersonalesOpen && editingUser && (
+      {datosPersonalesOpen && editingUser && createPortal(
         <div className={styles.modalOverlay} onClick={closeDatosPersonalesModal}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -609,6 +704,26 @@ export const UsuariosList = ({
                   required
                 />
               </div>
+
+              {editingUser.rol === 'alumno' && (
+                <div className={styles.formGroup}>
+                  <label>Foto de perfil:</label>
+                  {datosPersonalesForm.imagen_url && (
+                    <div style={{ marginBottom: 8 }}>
+                      <img
+                        src={String(datosPersonalesForm.imagen_url)}
+                        alt="Foto actual"
+                        style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }}
+                      />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, 'datosPersonales')}
+                  />
+                </div>
+              )}
 
               {editingUser.rol === 'alumno' && (
                 <>
@@ -730,7 +845,7 @@ export const UsuariosList = ({
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Tabla de usuarios */}
       <div className={styles.tableContainer}>

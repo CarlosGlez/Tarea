@@ -15,7 +15,7 @@ import anunciosRoutes from './routes/anuncios.routes.js'
 const app = express()
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }))
-app.use(express.json())
+app.use(express.json({ limit: '5mb' }))
 
 // Rutas públicas (sin autenticación)
 app.use('/api/auth', authRoutes)

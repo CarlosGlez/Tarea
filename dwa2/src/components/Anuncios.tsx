@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import * as anunciosService from '../data/anunciosService'
 import type { Anuncio } from '../data/anunciosService'
 import { getCarreras } from '../data/carrerasService'
@@ -28,7 +29,7 @@ export const Anuncios = ({ usuarioId, rol }: AnunciosProps) => {
   // Eliminar
   const [eliminandoId, setEliminandoId] = useState<number | null>(null)
 
-  const cargarAnuncios = async () => {
+  const cargarAnuncios = useCallback(async () => {
     try {
       const data = rol === 'alumno'
         ? await anunciosService.getAnunciosAlumno(usuarioId)
@@ -39,11 +40,11 @@ export const Anuncios = ({ usuarioId, rol }: AnunciosProps) => {
     } finally {
       setCargando(false)
     }
-  }
+  }, [usuarioId, rol])
 
   useEffect(() => {
     cargarAnuncios()
-  }, [])
+  }, [cargarAnuncios])
 
   // Cargar carreras solo cuando el coordinador abre el form
   useEffect(() => {
@@ -117,7 +118,7 @@ export const Anuncios = ({ usuarioId, rol }: AnunciosProps) => {
       )}
 
       {/* Modal / formulario de creación */}
-      {mostrarForm && (
+      {mostrarForm && createPortal(
         <div className={styles.modalOverlay} onClick={cerrarForm}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -173,7 +174,7 @@ export const Anuncios = ({ usuarioId, rol }: AnunciosProps) => {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Lista de anuncios */}
       {cargando ? (

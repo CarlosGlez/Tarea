@@ -391,6 +391,8 @@
 .rightPanel {
   padding: 14px;
   background: var(--color-surface-muted);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .rightHeader {
@@ -402,9 +404,11 @@
 }
 
 .semestersGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
   gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
   align-items: stretch;
 }
 
@@ -415,6 +419,8 @@
   padding: 8px;
   display: flex;
   flex-direction: column;
+  min-width: 190px;
+  flex-shrink: 0;
 }
 
 .semesterColumn header {
@@ -501,10 +507,6 @@
 
 @media (max-width: 760px) {
   .createPlanForm {
-    grid-template-columns: 1fr;
-  }
-
-  .semestersGrid {
     grid-template-columns: 1fr;
   }
 

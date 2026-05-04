@@ -18,7 +18,10 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-  const { nombre_usuario, nombre, apellido, correo, contrasena, rol, carrera_id, plan_id } = req.body
+  const { nombre_usuario, nombre, apellido, correo, contrasena, rol, carrera_id, plan_id, numero_telefono, imagen_url } = req.body
+  if (!nombre_usuario?.trim() || !correo?.trim() || !contrasena) {
+    return res.status(400).json({ message: 'nombre_usuario, correo y contrasena son requeridos' })
+  }
   const hashedPassword = await bcrypt.hash(contrasena, 10)
 
   db.getConnection((connErr, connection) => {
@@ -44,12 +47,17 @@ router.post('/', async (req, res) => {
           if (err) return rollback(err)
 
           const userId = result.insertId
-          const matricula = `${new Date().getFullYear()}-${String(userId).padStart(6, '0')}`
+          const now = new Date()
+          const anio = now.getFullYear()
+          const mes = now.getMonth() + 1
+          const matricula = `${anio}-${String(userId).padStart(6, '0')}`
+          const generacion = String(anio)
+          const periodo = mes <= 6 ? `ENE-JUN ${anio}` : `AGO-DIC ${anio}`
 
           if (rol === 'alumno' && carrera_id && plan_id) {
             connection.query(
-              'INSERT INTO alumnos (id_alumno, matricula, plan_id, estatus_academico) VALUES (?, ?, ?, ?)',
-              [userId, matricula, plan_id, 'inscrito'],
+              'INSERT INTO alumnos (id_alumno, matricula, plan_id, estatus_academico, numero_telefono, generacion, imagen_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [userId, matricula, plan_id, 'inscrito', numero_telefono || null, generacion, imagen_url || null],
               (alumnoErr) => {
                 if (alumnoErr) return rollback(alumnoErr)
 
@@ -60,8 +68,8 @@ router.post('/', async (req, res) => {
                     if (carreraErr) return rollback(carreraErr)
 
                     connection.query(
-                      'INSERT INTO inscripciones (alumno_id, carrera_id) VALUES (?, ?)',
-                      [userId, carrera_id],
+                      'INSERT INTO inscripciones (alumno_id, carrera_id, periodo) VALUES (?, ?, ?)',
+                      [userId, carrera_id, periodo],
                       (inscErr) => {
                         if (inscErr) return rollback(inscErr)
 
@@ -114,6 +122,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params
   const { nombre_usuario, correo, contrasena, rol } = req.body
+  if (!nombre_usuario?.trim() || !correo?.trim()) {
+    return res.status(400).json({ message: 'nombre_usuario y correo son requeridos' })
+  }
   let query = 'UPDATE usuarios SET nombre_usuario = ?, correo = ?, rol = ? WHERE id = ?'
   let params = [nombre_usuario, correo, rol, id]
 
@@ -318,7 +329,7 @@ router.get('/:id/alumno-datos', (req, res) => {
   db.query(
     `SELECT
       u.id, u.nombre, u.apellido, u.nombre_usuario, u.correo, u.fecha_creacion,
-      a.matricula, a.escuela_procedencia, a.generacion, a.estatus_academico,
+      a.matricula, a.escuela_procedencia, a.generacion, a.estatus_academico, a.imagen_url,
       c.nombre AS carrera_nombre,
       p.nombre AS plan_estudios
     FROM usuarios u
@@ -348,6 +359,7 @@ router.get('/:id/alumno-datos', (req, res) => {
               nombre_usuario: userData.nombre_usuario,
               correo: userData.correo,
               matricula: userData.matricula || '',
+              imagen_url: userData.imagen_url || null,
               numero_telefono: '',
               numero_identificacion: '',
               fecha_nacimiento: null,
@@ -369,6 +381,7 @@ router.get('/:id/alumno-datos', (req, res) => {
             nombre_usuario: userData.nombre_usuario,
             correo: userData.correo,
             matricula: userData.matricula || '',
+            imagen_url: userData.imagen_url || null,
             numero_telefono: additionalData.numero_telefono || '',
             numero_identificacion: additionalData.numero_identificacion || '',
             fecha_nacimiento: additionalData.fecha_nacimiento || null,
@@ -387,7 +400,7 @@ router.get('/:id/alumno-datos', (req, res) => {
 // Actualizar datos personales del alumno
 router.put('/:id/alumno-datos', (req, res) => {
   const { id } = req.params
-  const { nombre, apellido, numero_telefono, numero_identificacion, fecha_nacimiento } = req.body
+  const { nombre, apellido, numero_telefono, numero_identificacion, fecha_nacimiento, imagen_url } = req.body
 
   // Actualizar usuarios
   db.query(
@@ -398,8 +411,8 @@ router.put('/:id/alumno-datos', (req, res) => {
 
       // Intentar actualizar campos adicionales (si existen)
       db.query(
-        'UPDATE alumnos SET numero_telefono = ?, numero_identificacion = ?, fecha_nacimiento = ? WHERE id_alumno = ?',
-        [numero_telefono || null, numero_identificacion || null, fecha_nacimiento || null, id],
+        'UPDATE alumnos SET numero_telefono = ?, numero_identificacion = ?, fecha_nacimiento = ?, imagen_url = ? WHERE id_alumno = ?',
+        [numero_telefono || null, numero_identificacion || null, fecha_nacimiento || null, imagen_url !== undefined ? imagen_url : null, id],
         (err2) => {
           // Si hay error (probablemente campos no existen), intentar crear registro básico
           if (err2) {

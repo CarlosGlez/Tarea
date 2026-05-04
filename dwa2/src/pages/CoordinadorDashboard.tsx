@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Sidebar } from "../components/Sidebar"
 import { SectionTransition } from "../components/SectionTransition"
 import { UsuariosList } from "../components/UsuariosList"
@@ -88,6 +88,8 @@ export const CoordinadorDashboard = () => {
   const [mensajeMateria, setMensajeMateria] = useState<string | null>(null)
   const [errorMateria, setErrorMateria] = useState<string | null>(null)
 
+  const periodoDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Usar hooks de coordinador
   const [chatBadge, setChatBadge] = useState(0)
 
@@ -103,7 +105,7 @@ export const CoordinadorDashboard = () => {
     return () => clearInterval(interval)
   }, [usuario?.id])
 
-  const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(null)
+  const { alumnos, cargando: cargandoAlumnos, refetch: refetchAlumnos } = useAlumnosByCarrera(usuario?.carrera_id ?? null)
   const { materias, cargando: cargandoMaterias } = useMateriasByCarrera(
     usuario?.carrera_id || null
   )
@@ -176,24 +178,31 @@ export const CoordinadorDashboard = () => {
     setSeccionActual("alumnos")
   }
 
-  const cargarReporte = async (tipo: TipoReporte) => {
+  const cargarReporte = async (
+    tipo: TipoReporte,
+    overrides?: { semestre?: string; periodo?: string; anio?: string }
+  ) => {
     if (!usuario?.carrera_id) return
     setReporteActivo(tipo)
     setCargandoReporte(true)
     setErrorReporte(null)
 
+    const semestre = overrides?.semestre ?? filtroSemestre
+    const periodo = overrides?.periodo ?? filtroPeriodo
+    const anio = overrides?.anio ?? filtroAnio
+
     try {
       if (tipo === "inscripciones") {
-        const data = await coordinadorService.getReporteInscripciones(usuario.carrera_id, filtroPeriodo || undefined)
+        const data = await coordinadorService.getReporteInscripciones(usuario.carrera_id, periodo || undefined)
         setDatosInscripciones(data ?? [])
       } else if (tipo === "rendimiento") {
-        const data = await coordinadorService.getReporteRendimiento(usuario.carrera_id, filtroSemestre !== "todos" ? filtroSemestre : undefined)
+        const data = await coordinadorService.getReporteRendimiento(usuario.carrera_id, semestre !== "todos" ? semestre : undefined)
         setDatosRendimiento(data ?? [])
       } else if (tipo === "desercion") {
-        const data = await coordinadorService.getReporteDesercion(usuario.carrera_id, filtroAnio || undefined)
+        const data = await coordinadorService.getReporteDesercion(usuario.carrera_id, anio || undefined)
         setDatosDesercion(data)
       } else if (tipo === "aprobacion") {
-        const data = await coordinadorService.getReporteAprobacion(usuario.carrera_id, filtroSemestre !== "todos" ? filtroSemestre : undefined)
+        const data = await coordinadorService.getReporteAprobacion(usuario.carrera_id, semestre !== "todos" ? semestre : undefined)
         setDatosAprobacion(data ?? [])
       }
     } catch {
@@ -656,141 +665,146 @@ export const CoordinadorDashboard = () => {
               ))}
             </div>
 
-            {/* Filtros contextuales */}
+            {/* Filtros + tabla: se remontan con animación al cambiar tipo */}
             {reporteActivo && (
-              <div className={styles.filtrosGrid}>
-                {(reporteActivo === "rendimiento" || reporteActivo === "aprobacion") && (
-                  <div className={styles.filtroItem}>
-                    <label className={styles.filtroLabel}>Semestre:</label>
-                    <select
-                      value={filtroSemestre}
-                      onChange={(e) => setFiltroSemestre(e.target.value)}
-                      className={styles.filtroSelect}
-                    >
-                      <option value="todos">Todos</option>
-                      {[1, 2, 3, 4, 5, 6, 7].map((s) => (
-                        <option key={s} value={String(s)}>{s}° Semestre</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {reporteActivo === "inscripciones" && (
-                  <div className={styles.filtroItem}>
-                    <label className={styles.filtroLabel}>Periodo:</label>
-                    <input
-                      className={styles.filtroSelect}
-                      type="text"
-                      placeholder="Ej: 2026-A (opcional)"
-                      value={filtroPeriodo}
-                      onChange={(e) => setFiltroPeriodo(e.target.value)}
-                    />
-                  </div>
-                )}
-                {reporteActivo === "desercion" && (
-                  <div className={styles.filtroItem}>
-                    <label className={styles.filtroLabel}>Año:</label>
-                    <select
-                      value={filtroAnio}
-                      onChange={(e) => setFiltroAnio(e.target.value)}
-                      className={styles.filtroSelect}
-                    >
-                      <option value="">Todos los años</option>
-                      {["2026", "2025", "2024", "2023"].map((a) => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div className={styles.filtroItem}>
-                  <label className={styles.filtroLabel}>&nbsp;</label>
-                  <button
-                    type="button"
-                    className={styles.boton}
-                    onClick={() => cargarReporte(reporteActivo)}
-                  >
-                    Actualizar reporte
-                  </button>
+              <SectionTransition key={reporteActivo}>
+                <div className={styles.filtrosGrid}>
+                  {(reporteActivo === "rendimiento" || reporteActivo === "aprobacion") && (
+                    <div className={styles.filtroItem}>
+                      <label className={styles.filtroLabel}>Semestre:</label>
+                      <select
+                        value={filtroSemestre}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setFiltroSemestre(val)
+                          cargarReporte(reporteActivo, { semestre: val })
+                        }}
+                        className={styles.filtroSelect}
+                      >
+                        <option value="todos">Todos</option>
+                        {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+                          <option key={s} value={String(s)}>{s}° Semestre</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {reporteActivo === "inscripciones" && (
+                    <div className={styles.filtroItem}>
+                      <label className={styles.filtroLabel}>Periodo:</label>
+                      <input
+                        className={styles.filtroSelect}
+                        type="text"
+                        placeholder="Ej: 2026-A (opcional)"
+                        value={filtroPeriodo}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setFiltroPeriodo(val)
+                          if (periodoDebounceRef.current) clearTimeout(periodoDebounceRef.current)
+                          periodoDebounceRef.current = setTimeout(() => {
+                            cargarReporte("inscripciones", { periodo: val })
+                          }, 600)
+                        }}
+                      />
+                    </div>
+                  )}
+                  {reporteActivo === "desercion" && (
+                    <div className={styles.filtroItem}>
+                      <label className={styles.filtroLabel}>Año:</label>
+                      <select
+                        value={filtroAnio}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setFiltroAnio(val)
+                          cargarReporte(reporteActivo, { anio: val })
+                        }}
+                        className={styles.filtroSelect}
+                      >
+                        <option value="">Todos los años</option>
+                        {["2026", "2025", "2024", "2023"].map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
 
-            {/* Stat de desercion */}
-            {reporteActivo === "desercion" && datosDesercion && !cargandoReporte && (
-              <div className={styles.datosUsuario}>
-                <p><strong>Total de bajas registradas:</strong> {datosDesercion.total}</p>
-              </div>
-            )}
+                {reporteActivo === "desercion" && datosDesercion && !cargandoReporte && (
+                  <div className={styles.datosUsuario}>
+                    <p><strong>Total de bajas registradas:</strong> {datosDesercion.total}</p>
+                  </div>
+                )}
 
-            {/* Tablas de resultados */}
-            {reporteActivo === "inscripciones" && (
-              <Reportes
-                titulo="Reporte de Inscripciones"
-                columnas={[
-                  { clave: "nombre", etiqueta: "Nombre" },
-                  { clave: "apellido", etiqueta: "Apellido" },
-                  { clave: "matricula", etiqueta: "Matricula" },
-                  { clave: "generacion", etiqueta: "Generacion" },
-                  { clave: "periodo", etiqueta: "Periodo" },
-                  { clave: "fecha_inscripcion", etiqueta: "Fecha de Inscripcion" },
-                ]}
-                datos={datosInscripciones.map((item, i) => ({ ...item, id: i }))}
-                cargando={cargandoReporte}
-                error={errorReporte}
-                paginacion
-              />
-            )}
+                {reporteActivo === "inscripciones" && (
+                  <Reportes
+                    titulo="Reporte de Inscripciones"
+                    columnas={[
+                      { clave: "nombre", etiqueta: "Nombre" },
+                      { clave: "apellido", etiqueta: "Apellido" },
+                      { clave: "matricula", etiqueta: "Matricula" },
+                      { clave: "generacion", etiqueta: "Generacion" },
+                      { clave: "periodo", etiqueta: "Periodo" },
+                      { clave: "fecha_inscripcion", etiqueta: "Fecha de Inscripcion" },
+                    ]}
+                    datos={datosInscripciones.map((item, i) => ({ ...item, id: i }))}
+                    cargando={cargandoReporte}
+                    error={errorReporte}
+                    paginacion
+                  />
+                )}
 
-            {reporteActivo === "rendimiento" && (
-              <Reportes
-                titulo="Reporte de Rendimiento Academico"
-                columnas={[
-                  { clave: "nombre_usuario", etiqueta: "Alumno" },
-                  { clave: "matricula", etiqueta: "Matricula" },
-                  { clave: "materias_cursadas", etiqueta: "Cursadas", tipo: "numero" },
-                  { clave: "materias_aprobadas", etiqueta: "Aprobadas", tipo: "numero" },
-                  { clave: "promedio", etiqueta: "Promedio", tipo: "numero" },
-                  { clave: "estatus_academico", etiqueta: "Estatus" },
-                ]}
-                datos={datosRendimiento.map((item, i) => ({ ...item, id: i }))}
-                cargando={cargandoReporte}
-                error={errorReporte}
-                paginacion
-              />
-            )}
+                {reporteActivo === "rendimiento" && (
+                  <Reportes
+                    titulo="Reporte de Rendimiento Academico"
+                    columnas={[
+                      { clave: "nombre_usuario", etiqueta: "Alumno" },
+                      { clave: "matricula", etiqueta: "Matricula" },
+                      { clave: "materias_cursadas", etiqueta: "Cursadas", tipo: "numero" },
+                      { clave: "materias_aprobadas", etiqueta: "Aprobadas", tipo: "numero" },
+                      { clave: "promedio", etiqueta: "Promedio", tipo: "numero" },
+                      { clave: "estatus_academico", etiqueta: "Estatus" },
+                    ]}
+                    datos={datosRendimiento.map((item, i) => ({ ...item, id: i }))}
+                    cargando={cargandoReporte}
+                    error={errorReporte}
+                    paginacion
+                  />
+                )}
 
-            {reporteActivo === "desercion" && (
-              <Reportes
-                titulo="Historial de Bajas"
-                columnas={[
-                  { clave: "nombre", etiqueta: "Nombre" },
-                  { clave: "apellido", etiqueta: "Apellido" },
-                  { clave: "matricula", etiqueta: "Matricula" },
-                  { clave: "generacion", etiqueta: "Generacion" },
-                  { clave: "fecha_baja", etiqueta: "Fecha de Baja" },
-                  { clave: "motivo", etiqueta: "Motivo" },
-                ]}
-                datos={(datosDesercion?.lista ?? []).map((item, i) => ({ ...item, id: i }))}
-                cargando={cargandoReporte}
-                error={errorReporte}
-                paginacion
-              />
-            )}
+                {reporteActivo === "desercion" && (
+                  <Reportes
+                    titulo="Historial de Bajas"
+                    columnas={[
+                      { clave: "nombre", etiqueta: "Nombre" },
+                      { clave: "apellido", etiqueta: "Apellido" },
+                      { clave: "matricula", etiqueta: "Matricula" },
+                      { clave: "generacion", etiqueta: "Generacion" },
+                      { clave: "fecha_baja", etiqueta: "Fecha de Baja" },
+                      { clave: "motivo", etiqueta: "Motivo" },
+                    ]}
+                    datos={(datosDesercion?.lista ?? []).map((item, i) => ({ ...item, id: i }))}
+                    cargando={cargandoReporte}
+                    error={errorReporte}
+                    paginacion
+                  />
+                )}
 
-            {reporteActivo === "aprobacion" && (
-              <Reportes
-                titulo="Reporte de Tasas de Aprobacion"
-                columnas={[
-                  { clave: "codigo", etiqueta: "Codigo" },
-                  { clave: "nombre", etiqueta: "Materia" },
-                  { clave: "estudiantes_totales", etiqueta: "Total", tipo: "numero" },
-                  { clave: "estudiantes_aprobados", etiqueta: "Aprobados", tipo: "numero" },
-                  { clave: "tasa_aprobacion", etiqueta: "Tasa %", tipo: "porcentaje" },
-                ]}
-                datos={datosAprobacion.map((item, i) => ({ ...item, id: i }))}
-                cargando={cargandoReporte}
-                error={errorReporte}
-                paginacion
-              />
+                {reporteActivo === "aprobacion" && (
+                  <Reportes
+                    titulo="Reporte de Tasas de Aprobacion"
+                    columnas={[
+                      { clave: "codigo", etiqueta: "Codigo" },
+                      { clave: "nombre", etiqueta: "Materia" },
+                      { clave: "estudiantes_totales", etiqueta: "Total", tipo: "numero" },
+                      { clave: "estudiantes_aprobados", etiqueta: "Aprobados", tipo: "numero" },
+                      { clave: "tasa_aprobacion", etiqueta: "Tasa %", tipo: "porcentaje" },
+                    ]}
+                    datos={datosAprobacion.map((item, i) => ({ ...item, id: i }))}
+                    cargando={cargandoReporte}
+                    error={errorReporte}
+                    paginacion
+                  />
+                )}
+              </SectionTransition>
             )}
           </div>
         )}

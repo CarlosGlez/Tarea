@@ -259,7 +259,8 @@ router.post('/mensajes', (req, res) => {
 
       db.query(
         'UPDATE conversaciones SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?',
-        [conversacion_id]
+        [conversacion_id],
+        (updateErr) => { if (updateErr) console.error('Error actualizando conversacion:', updateErr) }
       )
 
       res.status(201).json({ id: result.insertId })
