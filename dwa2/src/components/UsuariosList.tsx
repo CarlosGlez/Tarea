@@ -139,6 +139,8 @@ export const UsuariosList = ({
     setEditingUser(user as Usuario)
     setFormData({
       nombre_usuario: user.nombre_usuario,
+      nombre: '',
+      apellido: '',
       correo: user.correo || '',
       contrasena: '',
       rol: user.rol,
